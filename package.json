@@ -14,7 +14,11 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:db:start": "bash tests/integration/harness/manage-test-db.sh start",
+    "test:db:stop": "bash tests/integration/harness/manage-test-db.sh stop",
+    "test:db:reset": "bash tests/integration/harness/manage-test-db.sh reset",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
