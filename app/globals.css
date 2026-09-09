@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — foundation only (Phase 1).
+ * Palette and type direction per the product brief: warm ivory, charcoal,
+ * muted bronze; an elegant serif for headings, a modern sans for interface
+ * copy. Actual customer/staff component systems are built out in Phase 4
+ * (customer) and Phase 7 (staff) — this just gives them tokens to consume.
+ */
+@theme {
+  --color-ivory: #faf7f1;
+  --color-ivory-raised: #ffffff;
+  --color-charcoal: #2a241e;
+  --color-charcoal-muted: #6e6154;
+  --color-bronze: #9c5a2e;
+  --color-bronze-strong: #6f3e1d;
+  --color-border: #e4d9c4;
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+}
