@@ -6,10 +6,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Thin server action per §22 — validation + the actual work happen one
- * layer down (Supabase Auth itself here; lib/business + lib/db once orders
- * and menu actions exist). Role/tenant lookups against restaurant_staff
- * arrive with the Phase 2 schema — this only establishes "is this a valid
- * staff login," per Phase 1's auth-foundation scope.
+ * layer down (Supabase Auth for credential verification, restaurant_staff
+ * for the "are they actually staff anywhere" check added in Phase 3).
+ *
+ * A valid Supabase Auth account is necessary but not sufficient: someone
+ * could exist in auth.users without ever being added to restaurant_staff
+ * (e.g. a customer who never signs up for anything, or a removed staff
+ * member). Rejecting that case here — not just deeper in the app — means
+ * a bare login never leaves a signed-in-but-unauthorized session sitting
+ * around.
  */
 export async function signInWithPassword(
   _prevState: ActionResult<null> | null,
@@ -30,6 +35,22 @@ export async function signInWithPassword(
   if (error) {
     return toActionResult(
       new AppError("UNAUTHENTICATED", error.message, "Incorrect email or password.", { cause: error }),
+    );
+  }
+
+  const { count } = await supabase
+    .from("restaurant_staff")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true);
+
+  if (!count) {
+    await supabase.auth.signOut();
+    return toActionResult(
+      new AppError(
+        "FORBIDDEN",
+        "authenticated user has no active restaurant_staff row",
+        "This account isn't set up as restaurant staff. Contact your admin.",
+      ),
     );
   }
 

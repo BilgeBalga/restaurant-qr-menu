@@ -18,7 +18,8 @@
     "test:db:start": "bash tests/integration/harness/manage-test-db.sh start",
     "test:db:stop": "bash tests/integration/harness/manage-test-db.sh stop",
     "test:db:reset": "bash tests/integration/harness/manage-test-db.sh reset",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:seed": "node db/seed/seed.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

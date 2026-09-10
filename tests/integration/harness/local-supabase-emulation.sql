@@ -44,8 +44,27 @@ LANGUAGE sql STABLE AS $$
   )::uuid;
 $$;
 
+-- Real Supabase ships realtime.send() for server-side broadcast (used by
+-- 0004_customer_order_broadcast.sql's trigger). This local harness has no
+-- real Realtime service behind it, so it gets a no-op stub with the same
+-- signature — enough for triggers to call it without erroring; it proves
+-- nothing about actual message delivery, which is Supabase-side behavior
+-- this local harness was never meant to verify (see the Phase 2 report's
+-- distinction between local Postgres verification and real Supabase
+-- integration verification — the same boundary applies here).
+CREATE SCHEMA IF NOT EXISTS realtime;
+CREATE OR REPLACE FUNCTION realtime.send(payload jsonb, event text, topic text, private boolean DEFAULT true)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NULL;
+END;
+$$;
+
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA realtime TO anon, authenticated, service_role;
 
 -- Mirrors what Supabase's platform bootstrapping does automatically for
 -- every real project (not something our own app migrations do there).

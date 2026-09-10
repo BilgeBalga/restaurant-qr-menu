@@ -22,6 +22,27 @@
       "when": 1788986349931,
       "tag": "0002_rls_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788990281550,
+      "tag": "0003_fix_create_order_token_generation",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788991259926,
+      "tag": "0004_customer_order_broadcast",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788999999999,
+      "tag": "0005_order_tracking_currency",
+      "breakpoints": true
     }
   ]
 }

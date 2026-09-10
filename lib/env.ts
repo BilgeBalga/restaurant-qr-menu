@@ -2,9 +2,13 @@ import { z } from "zod";
 
 /**
  * Public, browser-safe env vars only. RLS — not secrecy — governs what the
- * anon key can do (§26), so it's fine for this module to be importable from
- * client components. The service-role key lives in ./env.server.ts instead,
- * which is import-guarded so it can never end up in a client bundle.
+ * publishable key can do (§26), so it's fine for this module to be
+ * importable from client components. The secret key lives in
+ * ./env.server.ts instead, which is import-guarded so it can never end up
+ * in a client bundle.
+ *
+ * Uses Supabase's current API key system (publishable/secret keys), not
+ * the legacy anon/service_role names.
  *
  * Validation is lazy (on first call), not at module import time — several
  * Phase 1 routes render statically and must not require real credentials
@@ -13,7 +17,7 @@ import { z } from "zod";
 
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url(),
 });
 
