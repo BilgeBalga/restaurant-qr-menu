@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import type { MenuItemView, OptionGroupView } from "@/app/actions/menu";
 import { useCart } from "@/components/customer/CartProvider";
 import { computeOrderTotals } from "@/lib/business/pricing";
-
-function money(cents: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
-}
+import { formatMoney as money } from "@/lib/format/money";
 
 type Selections = Record<string, string[]>; // groupId -> choiceId[]
 

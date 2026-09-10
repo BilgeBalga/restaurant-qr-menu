@@ -4,10 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { CategoryView, MenuItemView } from "@/app/actions/menu";
 import { useCart } from "@/components/customer/CartProvider";
-
-function money(cents: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
-}
+import { formatMoney as money } from "@/lib/format/money";
 
 function ItemCard({ item, currency }: { item: MenuItemView; currency: string }) {
   const disabled = !item.isAvailable;

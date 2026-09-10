@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getOrderByToken, type OrderTrackingView } from "@/app/actions/orders";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { OrderStatus } from "@/lib/business/orderStateMachine";
+import { formatMoney as money } from "@/lib/format/money";
 
 const STEPS: OrderStatus[] = ["new", "preparing", "ready", "completed"];
 const STEP_LABEL: Record<OrderStatus, string> = {
@@ -13,10 +14,6 @@ const STEP_LABEL: Record<OrderStatus, string> = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
-
-function money(cents: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
-}
 
 /**
  * §16: subscribes to the Broadcast channel `order-<access_token>` —

@@ -34,16 +34,29 @@ function saveCart(cart: Cart): void {
  * so getServerSnapshot returns an empty cart; the client snapshot is
  * read/updated here). This avoids the anti-pattern of calling setState
  * synchronously inside a hydration effect.
+ *
+ * getServerSnapshot must return a referentially *stable* value —
+ * useSyncExternalStore calls it on every render to check whether
+ * anything changed, and a fresh object each time (the original bug here:
+ * `emptyCart(tableId)` allocates a new array and a new random
+ * idempotencyKey on every call) reads as "always different," which is
+ * exactly the "getServerSnapshot should be cached" warning and the
+ * infinite-render risk it's warning about. `serverSnapshot` is computed
+ * once, in the constructor, and never reassigned — one stable reference
+ * per CartStore instance (and a fresh instance, so a fresh stable
+ * snapshot, is created per tableId via the useMemo below).
  */
-class CartStore {
+export class CartStore {
   readonly tableId: string;
   private listeners = new Set<() => void>();
   private cart: Cart;
+  private readonly serverSnapshot: Cart;
   private hydrated = false;
 
   constructor(tableId: string) {
     this.tableId = tableId;
     this.cart = emptyCart(tableId);
+    this.serverSnapshot = this.cart;
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -57,7 +70,7 @@ class CartStore {
   };
 
   getSnapshot = (): Cart => this.cart;
-  getServerSnapshot = (): Cart => emptyCart(this.tableId);
+  getServerSnapshot = (): Cart => this.serverSnapshot;
 
   private notify() {
     for (const listener of this.listeners) listener();

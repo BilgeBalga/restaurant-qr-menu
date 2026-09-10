@@ -6,10 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/components/customer/CartProvider";
 import { createOrder } from "@/app/actions/orders";
 import { computeOrderTotals } from "@/lib/business/pricing";
-
-function money(cents: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(cents / 100);
-}
+import { formatMoney as money } from "@/lib/format/money";
 
 /**
  * Subtotal only — deliberately no tax/service-charge estimate here.
