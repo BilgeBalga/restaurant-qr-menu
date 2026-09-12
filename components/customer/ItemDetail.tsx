@@ -6,6 +6,7 @@ import type { MenuItemView, OptionGroupView } from "@/app/actions/menu";
 import { useCart } from "@/components/customer/CartProvider";
 import { computeOrderTotals } from "@/lib/business/pricing";
 import { formatMoney as money } from "@/lib/format/money";
+import { MenuItemImage } from "@/components/ui/MenuItemImage";
 
 type Selections = Record<string, string[]>; // groupId -> choiceId[]
 
@@ -67,6 +68,12 @@ export function ItemDetail({ item, currency }: { item: MenuItemView; currency: s
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-32 pt-6">
+      <MenuItemImage
+        name={item.name}
+        imageUrl={item.imageUrl}
+        className="mb-4 aspect-[4/3] w-full rounded-lg"
+        monogramClassName="text-5xl"
+      />
       <h1 className="font-display text-2xl font-semibold">{item.name}</h1>
       {item.description ? <p className="mt-2 text-[var(--color-charcoal-muted)]">{item.description}</p> : null}
 

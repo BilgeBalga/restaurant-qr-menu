@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTestRestaurant, sql, withRole } from "./db";
+import { createTestRestaurant, sql, uniqueKey, withRole } from "./db";
 
 async function createOrder(tableId: string, menuItemId: string, key: string) {
   return withRole("anon", null, async (conn) => {
@@ -25,7 +25,7 @@ describe("Finding 1 — concurrent table-session creation is race-safe", () => {
     const fx = await createTestRestaurant();
 
     const results = await Promise.all(
-      Array.from({ length: 4 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, `idem-concurrent-${i}`)),
+      Array.from({ length: 4 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, uniqueKey(`idem-concurrent-${i}`))),
     );
     expect(results).toHaveLength(4);
 
@@ -41,7 +41,7 @@ describe("Finding 1 — concurrent table-session creation is race-safe", () => {
     const fx = await createTestRestaurant();
 
     await Promise.all(
-      Array.from({ length: 20 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, `idem-heavy-${i}`)),
+      Array.from({ length: 20 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, uniqueKey(`idem-heavy-${i}`))),
     );
 
     const [countRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE table_id = ${fx.tableId}`;
@@ -53,7 +53,7 @@ describe("Finding 1 — concurrent table-session creation is race-safe", () => {
     const fx = await createTestRestaurant();
 
     await Promise.all(
-      Array.from({ length: 15 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, `idem-ordernum-${i}`)),
+      Array.from({ length: 15 }, (_, i) => createOrder(fx.tableId, fx.menuItemId, uniqueKey(`idem-ordernum-${i}`))),
     );
 
     const rows = await sql`SELECT order_number FROM orders WHERE restaurant_id = ${fx.restaurantId} ORDER BY order_number`;
@@ -68,8 +68,8 @@ describe("Finding 1 — concurrent table-session creation is race-safe", () => {
       INSERT INTO tables (restaurant_id, label) VALUES (${fx.restaurantId}, 'Table Other') RETURNING id
     `;
 
-    await createOrder(fx.tableId, fx.menuItemId, "idem-tableA");
-    await createOrder(secondTable!.id, fx.menuItemId, "idem-tableB");
+    await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-tableA"));
+    await createOrder(secondTable!.id, fx.menuItemId, uniqueKey("idem-tableB"));
 
     const [countRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE restaurant_id = ${fx.restaurantId}`;
     const count = countRow!.count;

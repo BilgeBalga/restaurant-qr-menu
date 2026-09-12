@@ -3,11 +3,17 @@ import Link from "next/link";
 import { getOrderDetail } from "@/app/actions/orders";
 import { requireActiveMembership } from "@/lib/auth/session";
 import { OrderStatusActions } from "@/components/staff/OrderStatusActions";
+import { formatMoney } from "@/lib/format/money";
 
-const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
-export default async function StaffOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StaffOrderDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
+  const { from } = await searchParams;
   const membership = await requireActiveMembership();
   const result = await getOrderDetail(id);
 
@@ -17,11 +23,14 @@ export default async function StaffOrderDetailPage({ params }: { params: Promise
   }
 
   const order = result.data;
+  const money = (cents: number) => formatMoney(cents, order.currency);
+  const backHref = from === "history" ? "/staff/history" : "/staff/orders";
+  const backLabel = from === "history" ? "← Back to history" : "← Back to orders";
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/staff/orders" className="text-sm text-[var(--color-charcoal-muted)] hover:underline">
-        ← Back to orders
+      <Link href={backHref} className="text-sm text-[var(--color-charcoal-muted)] hover:underline">
+        {backLabel}
       </Link>
 
       <div className="mt-3 flex items-baseline justify-between">

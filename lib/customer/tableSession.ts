@@ -17,6 +17,15 @@ export interface TableCookieData {
   tableId: string;
   restaurantId: string;
   tableLabel: string;
+  /**
+   * Set once create_order returns a table_session_id, so a later order
+   * attempt from this same browser can be checked against that specific
+   * session (closed-session detection, §18). Every call site that sets
+   * this cookie fresh from a QR scan (the /t/[token] route,
+   * syncTableCookieFromToken) omits it, which is exactly right — a new
+   * scan must never carry over a stale session id.
+   */
+  sessionId?: string;
 }
 
 export async function setTableCookie(data: TableCookieData): Promise<void> {

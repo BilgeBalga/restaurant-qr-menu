@@ -1,4 +1,5 @@
 import { getDashboardMetrics } from "@/app/actions/dashboard";
+import { formatMoney } from "@/lib/format/money";
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
@@ -18,7 +19,6 @@ export default async function StaffDashboardPage() {
   }
 
   const m = result.data;
-  const currency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -28,7 +28,7 @@ export default async function StaffDashboardPage() {
         <Stat label="Preparing" value={m.preparingCount} />
         <Stat label="Ready" value={m.readyCount} />
         <Stat label="Completed today" value={m.completedToday} />
-        <Stat label="Revenue today" value={currency(m.revenueTodayCents)} />
+        <Stat label="Revenue today" value={formatMoney(m.revenueTodayCents, m.currency)} />
         <Stat label="Active tables" value={m.activeTables} />
       </div>
     </div>

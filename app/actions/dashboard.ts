@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireActiveMembership } from "@/lib/auth/session";
+import { startOfDayInTimeZone } from "@/lib/business/timezone";
 import type { ActionResult } from "@/lib/errors";
 
 export interface DashboardMetrics {
@@ -10,6 +11,7 @@ export interface DashboardMetrics {
   readyCount: number;
   completedToday: number;
   revenueTodayCents: number;
+  currency: string;
   activeTables: number;
 }
 
@@ -17,8 +19,19 @@ export interface DashboardMetrics {
 export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetrics>> {
   const membership = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+
+  // Fetched first (not in the Promise.all below) because "today" itself
+  // depends on the restaurant's timezone — this used to be the server
+  // process's own local time, which is wrong for any restaurant not
+  // sitting in that same zone.
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("currency, timezone")
+    .eq("id", membership.restaurantId)
+    .single();
+  const currency = (restaurant as { currency: string; timezone: string } | null)?.currency ?? "USD";
+  const timezone = (restaurant as { currency: string; timezone: string } | null)?.timezone ?? "UTC";
+  const startOfToday = startOfDayInTimeZone(timezone);
 
   const [statusCounts, completedToday, openSessions] = await Promise.all([
     supabase.from("orders").select("status").in("status", ["new", "preparing", "ready"]),
@@ -41,6 +54,7 @@ export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetri
       readyCount: rows.filter((r) => r.status === "ready").length,
       completedToday: completedRows.length,
       revenueTodayCents: completedRows.reduce((sum, r) => sum + r.total_cents, 0),
+      currency,
       activeTables: (openSessions.data ?? []).length,
     },
   };

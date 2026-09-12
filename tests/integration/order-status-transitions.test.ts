@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTestRestaurant, sql, withRole } from "./db";
+import { createTestRestaurant, sql, uniqueKey, withRole } from "./db";
 
 async function createOrder(tableId: string, menuItemId: string, key: string) {
   return withRole("anon", null, async (conn) => {
@@ -23,7 +23,7 @@ describe("set_order_status — legal/illegal transitions (§15)", () => {
 
   it("walks the full happy path: new -> preparing -> ready -> completed", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-happy-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-happy-1"));
 
     await setStatus(order_id, fx.staffId, "preparing");
     await setStatus(order_id, fx.staffId, "ready");
@@ -45,7 +45,7 @@ describe("set_order_status — legal/illegal transitions (§15)", () => {
 
   it("rejects skipping a state (new -> ready) and leaves the order untouched", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-skip-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-skip-1"));
 
     await expect(setStatus(order_id, fx.staffId, "ready")).rejects.toThrow(/ILLEGAL_TRANSITION/);
 
@@ -55,20 +55,20 @@ describe("set_order_status — legal/illegal transitions (§15)", () => {
 
   it("rejects a no-op same-status transition", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-noop-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-noop-1"));
     await expect(setStatus(order_id, fx.staffId, "new")).rejects.toThrow(/ILLEGAL_TRANSITION/);
   });
 
   it("rejects any transition out of a terminal status", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-terminal-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-terminal-1"));
     await setStatus(order_id, fx.staffId, "cancelled");
     await expect(setStatus(order_id, fx.staffId, "preparing")).rejects.toThrow(/ILLEGAL_TRANSITION/);
   });
 
   it("only admin can cancel a ready order; plain staff cannot (§11)", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-cancelready-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-cancelready-1"));
     await setStatus(order_id, fx.staffId, "preparing");
     await setStatus(order_id, fx.staffId, "ready");
 
@@ -81,7 +81,7 @@ describe("set_order_status — legal/illegal transitions (§15)", () => {
 
   it("staff can cancel a new or preparing order without admin", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-staffcancel-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-staffcancel-1"));
     await setStatus(order_id, fx.staffId, "cancelled");
     const [order] = await sql`SELECT status FROM orders WHERE id = ${order_id}`;
     expect(order!.status).toBe("cancelled");
@@ -92,7 +92,7 @@ describe("Finding 3 — concurrent status transitions serialize via FOR UPDATE, 
 
   it("two simultaneous transitions from the same status: exactly one succeeds, the other is cleanly rejected", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-race-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-race-1"));
     await setStatus(order_id, fx.staffId, "preparing");
 
     // Fire both at once — one races to "ready", the other to "cancelled" — from the SAME starting status.
@@ -119,7 +119,7 @@ describe("Finding 3 — concurrent status transitions serialize via FOR UPDATE, 
 
   it("ten concurrent identical transition attempts: exactly one succeeds", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-race-10");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-race-10"));
 
     const results = await Promise.allSettled(
       Array.from({ length: 10 }, () => setStatus(order_id, fx.staffId, "preparing")),
@@ -142,7 +142,7 @@ describe("Finding 2 — table_session auto-closes exactly when its last non-term
 
   it("closes the session when the only order in it completes", async () => {
     const fx = await createTestRestaurant();
-    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, "idem-autoclose-1");
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-autoclose-1"));
 
     const [openSession] = await sql`SELECT id, status FROM table_sessions WHERE table_id = ${fx.tableId}`;
     expect(openSession!.status).toBe("open");
@@ -163,8 +163,8 @@ describe("Finding 2 — table_session auto-closes exactly when its last non-term
 
   it("does NOT close the session while a second order in it is still active", async () => {
     const fx = await createTestRestaurant();
-    const first = await createOrder(fx.tableId, fx.menuItemId, "idem-multi-1");
-    const second = await createOrder(fx.tableId, fx.menuItemId, "idem-multi-2");
+    const first = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-1"));
+    const second = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-2"));
 
     const [session] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
     // Both orders share the one open session (§7/§18 — one table, one open session, many orders).
@@ -186,14 +186,14 @@ describe("Finding 2 — table_session auto-closes exactly when its last non-term
 
   it("a new order placed after the session auto-closed opens a FRESH session, never rejoins the closed one", async () => {
     const fx = await createTestRestaurant();
-    const first = await createOrder(fx.tableId, fx.menuItemId, "idem-fresh-1");
+    const first = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-fresh-1"));
     await setStatus(first.order_id, fx.staffId, "preparing");
     await setStatus(first.order_id, fx.staffId, "ready");
     await setStatus(first.order_id, fx.staffId, "completed");
 
     const [closedSession] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
 
-    const second = await createOrder(fx.tableId, fx.menuItemId, "idem-fresh-2");
+    const second = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-fresh-2"));
     const [secondOrder] = await sql`SELECT table_session_id FROM orders WHERE id = ${second.order_id}`;
 
     expect(secondOrder!.table_session_id).not.toBe(closedSession!.id);
@@ -231,5 +231,47 @@ describe("clear_table — manual override", () => {
         return conn`SELECT public.clear_table(${a.tableId}::uuid)`;
       }),
     ).rejects.toThrow(/FORBIDDEN/);
+  });
+
+  it("returns the id of the session it actually closed — the app layer uses this to log the audit entry", async () => {
+    const fx = await createTestRestaurant();
+    const [session] = await sql`
+      INSERT INTO table_sessions (restaurant_id, table_id, status) VALUES (${fx.restaurantId}, ${fx.tableId}, 'open')
+      RETURNING id
+    `;
+
+    const [row] = await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid) AS result`;
+    });
+
+    expect((row!.result as { session_id: string }).session_id).toBe(session!.id);
+  });
+
+  it("returns session_id: null (a safe no-op) when there is no open session to close", async () => {
+    const fx = await createTestRestaurant();
+
+    const [row] = await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid) AS result`;
+    });
+
+    expect((row!.result as { session_id: string | null }).session_id).toBeNull();
+  });
+
+  it("preserves the session row and all its historical orders — never deletes anything", async () => {
+    const fx = await createTestRestaurant();
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-preserve-1"));
+    const [before] = await sql`SELECT table_session_id FROM orders WHERE id = ${order_id}`;
+
+    await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid)`;
+    });
+
+    const [session] = await sql`SELECT id, status FROM table_sessions WHERE id = ${before!.table_session_id}`;
+    expect(session).toBeDefined();
+    expect(session!.status).toBe("closed");
+
+    const [order] = await sql`SELECT id, table_session_id FROM orders WHERE id = ${order_id}`;
+    expect(order).toBeDefined();
+    expect(order!.table_session_id).toBe(before!.table_session_id);
   });
 });

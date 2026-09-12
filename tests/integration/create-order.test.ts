@@ -1,20 +1,27 @@
 import type postgres from "postgres";
 import { describe, expect, it } from "vitest";
-import { createTestRestaurant, sql, withRole } from "./db";
+import { createTestRestaurant, sql, uniqueKey, withRole } from "./db";
 
 async function callCreateOrder(
   tableId: string,
   items: readonly postgres.JSONValue[],
   idempotencyKey: string,
   note: string | null = null,
+  sessionId: string | null = null,
 ) {
   return withRole("anon", null, async (conn) => {
     const [row] = await conn`
       SELECT public.create_order(
-        ${tableId}::uuid, ${conn.json(items)}, ${note}, ${idempotencyKey}
+        ${tableId}::uuid, ${conn.json(items)}, ${note}, ${idempotencyKey}, ${sessionId}::uuid
       ) AS result
     `;
-    return row!.result as { order_id: string; order_number: string; access_token: string; total_cents: number };
+    return row!.result as {
+      order_id: string;
+      order_number: string;
+      access_token: string;
+      total_cents: number;
+      table_session_id: string;
+    };
   });
 }
 
@@ -26,7 +33,7 @@ describe("create_order — transaction correctness", () => {
     const result = await callCreateOrder(
       fx.tableId,
       [{ menu_item_id: fx.menuItemId, quantity: 2, option_choice_ids: [fx.optionChoiceId], line_note: "no onions" }],
-      "idem-txn-1",
+      uniqueKey("idem-txn-1"),
       "Table note",
     );
 
@@ -73,7 +80,7 @@ describe("create_order — transaction correctness", () => {
           unit_price_cents_snapshot: 0,
         },
       ],
-      "idem-manip-1",
+      uniqueKey("idem-manip-1"),
     );
 
     expect(result.total_cents).toBe(1200); // real menu price, untouched by the forged fields
@@ -84,7 +91,7 @@ describe("create_order — transaction correctness", () => {
 
   it("is idempotent: the same idempotency_key returns the original order, never creates a second one", async () => {
     const fx = await createTestRestaurant();
-    const key = "idem-dup-" + crypto.randomUUID();
+    const key = uniqueKey("idem-dup");
 
     const first = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], key);
     const second = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 3 }], key);
@@ -102,7 +109,7 @@ describe("create_order — transaction correctness", () => {
     await sql`UPDATE menu_items SET is_available = false WHERE id = ${fx.menuItemId}`;
 
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], "idem-unavail-1"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-unavail-1")),
     ).rejects.toThrow(/MENU_ITEM_UNAVAILABLE: Classic Burger/);
 
     const [countRow] = await sql`SELECT count(*)::int AS count FROM orders WHERE table_id = ${fx.tableId}`;
@@ -118,33 +125,33 @@ describe("create_order — transaction correctness", () => {
       callCreateOrder(
         fx.tableId,
         [{ menu_item_id: fx.menuItemId, quantity: 1, option_choice_ids: [fx.optionChoiceId] }],
-        "idem-opt-unavail-1",
+        uniqueKey("idem-opt-unavail-1"),
       ),
     ).rejects.toThrow(/OPTION_UNAVAILABLE: Extra cheese/);
   });
 
   it("rejects an empty cart", async () => {
     const fx = await createTestRestaurant();
-    await expect(callCreateOrder(fx.tableId, [], "idem-empty-1")).rejects.toThrow(/EMPTY_ORDER/);
+    await expect(callCreateOrder(fx.tableId, [], uniqueKey("idem-empty-1"))).rejects.toThrow(/EMPTY_ORDER/);
   });
 
   it("rejects invalid quantities (zero, negative, absurdly large)", async () => {
     const fx = await createTestRestaurant();
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 0 }], "idem-q0"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 0 }], uniqueKey("idem-q0")),
     ).rejects.toThrow(/INVALID_QUANTITY/);
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: -1 }], "idem-qneg"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: -1 }], uniqueKey("idem-qneg")),
     ).rejects.toThrow(/INVALID_QUANTITY/);
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 21 }], "idem-qbig"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 21 }], uniqueKey("idem-qbig")),
     ).rejects.toThrow(/INVALID_QUANTITY/);
   });
 
   it("rejects a menu_item_id that doesn't exist", async () => {
     const fx = await createTestRestaurant();
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: crypto.randomUUID(), quantity: 1 }], "idem-noitem"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: crypto.randomUUID(), quantity: 1 }], uniqueKey("idem-noitem")),
     ).rejects.toThrow(/MENU_ITEM_NOT_FOUND/);
   });
 
@@ -153,7 +160,7 @@ describe("create_order — transaction correctness", () => {
     const b = await createTestRestaurant();
 
     await expect(
-      callCreateOrder(a.tableId, [{ menu_item_id: b.menuItemId, quantity: 1 }], "idem-crosstenant"),
+      callCreateOrder(a.tableId, [{ menu_item_id: b.menuItemId, quantity: 1 }], uniqueKey("idem-crosstenant")),
     ).rejects.toThrow(/MENU_ITEM_NOT_FOUND/);
   });
 
@@ -161,13 +168,13 @@ describe("create_order — transaction correctness", () => {
     const fx = await createTestRestaurant();
     await sql`UPDATE tables SET is_active = false WHERE id = ${fx.tableId}`;
     await expect(
-      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], "idem-inactive-table"),
+      callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-inactive-table")),
     ).rejects.toThrow(/TABLE_INACTIVE/);
 
     const fx2 = await createTestRestaurant();
     await sql`UPDATE restaurants SET ordering_enabled = false WHERE id = ${fx2.restaurantId}`;
     await expect(
-      callCreateOrder(fx2.tableId, [{ menu_item_id: fx2.menuItemId, quantity: 1 }], "idem-ordering-disabled"),
+      callCreateOrder(fx2.tableId, [{ menu_item_id: fx2.menuItemId, quantity: 1 }], uniqueKey("idem-ordering-disabled")),
     ).rejects.toThrow(/ORDERING_DISABLED/);
   });
 });
@@ -176,7 +183,7 @@ describe("price snapshots and referential integrity", () => {
 
   it("a later price change never alters a historical order (§4/§7 price-history decision)", async () => {
     const fx = await createTestRestaurant();
-    const result = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], "idem-snap-1");
+    const result = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-snap-1"));
 
     await withRole("authenticated", fx.adminId, async (conn) => {
       return conn`UPDATE menu_items SET price_cents = 5000 WHERE id = ${fx.menuItemId}::uuid`;
@@ -191,7 +198,7 @@ describe("price snapshots and referential integrity", () => {
 
   it("a menu item that has been ordered can never be hard-deleted (ON DELETE RESTRICT)", async () => {
     const fx = await createTestRestaurant();
-    await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], "idem-restrict-1");
+    await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-restrict-1"));
 
     await expect(sql`DELETE FROM menu_items WHERE id = ${fx.menuItemId}`).rejects.toThrow(/violates foreign key/);
   });
@@ -211,10 +218,95 @@ describe("price snapshots and referential integrity", () => {
 
   it("order totals always satisfy total = subtotal + tax + service_charge (DB CHECK constraint)", async () => {
     const fx = await createTestRestaurant();
-    const result = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], "idem-check-1");
+    const result = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-check-1"));
 
     await expect(sql`UPDATE orders SET total_cents = 999999 WHERE id = ${result.order_id}`).rejects.toThrow(
       /orders_total_equals_components/,
     );
+  });
+});
+
+/**
+ * §18 explicit staff-controlled session closing. Covers the exact stale-
+ * browser scenario from the feature brief: a customer's remembered
+ * table_session_id must stop working the instant staff closes it — table
+ * id alone can't distinguish that stale request from a genuinely new
+ * customer who just scanned the same static QR (who sends no session id
+ * at all and is handled by the untouched acquire-or-create path, already
+ * covered by "Finding 1"/"Finding 2" tests elsewhere in this suite).
+ */
+describe("create_order — closed-session rejection (§18)", () => {
+
+  it("returns the table_session_id it created or joined", async () => {
+    const fx = await createTestRestaurant();
+    const result = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-sid-1"));
+
+    const [session] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
+    expect(result.table_session_id).toBe(session!.id);
+  });
+
+  it("rejects a new order once staff has closed the caller's remembered session, and creates nothing", async () => {
+    const fx = await createTestRestaurant();
+    const first = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-close-1"));
+    const sessionId = first.table_session_id;
+
+    await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid)`;
+    });
+
+    await expect(
+      callCreateOrder(
+        fx.tableId,
+        [{ menu_item_id: fx.menuItemId, quantity: 1 }],
+        uniqueKey("idem-close-2"),
+        null,
+        sessionId,
+      ),
+    ).rejects.toThrow(/SESSION_CLOSED/);
+
+    // Only the first order exists — the rejected attempt created no order,
+    // no order_items, and no order_status_history (all in the same table).
+    const [countRow] = await sql`SELECT count(*)::int AS count FROM orders WHERE table_id = ${fx.tableId}`;
+    expect(countRow!.count).toBe(1);
+  });
+
+  it("a fresh order with no remembered session succeeds after a manual close, opening a NEW session — the closed one is never reused", async () => {
+    const fx = await createTestRestaurant();
+    const first = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-rescan-1"));
+
+    await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid)`;
+    });
+
+    // Simulates a rescanned QR / reset cookie: no session id sent at all.
+    const second = await callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-rescan-2"));
+
+    expect(second.table_session_id).not.toBe(first.table_session_id);
+
+    const [closedSession] = await sql`SELECT status, closed_by_staff_id FROM table_sessions WHERE id = ${first.table_session_id}`;
+    expect(closedSession!.status).toBe("closed");
+    expect(closedSession!.closed_by_staff_id).toBe(fx.staffId); // stays closed forever, attributed to the staff member who closed it
+
+    const [newSession] = await sql`SELECT status FROM table_sessions WHERE id = ${second.table_session_id}`;
+    expect(newSession!.status).toBe("open");
+
+    const [countRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE table_id = ${fx.tableId}`;
+    expect(countRow!.count).toBe(2);
+  });
+
+  it("a session id for a different table is rejected the same way (SESSION_CLOSED), never silently ignored", async () => {
+    const a = await createTestRestaurant();
+    const b = await createTestRestaurant();
+    const orderInA = await callCreateOrder(a.tableId, [{ menu_item_id: a.menuItemId, quantity: 1 }], uniqueKey("idem-cross-a"));
+
+    await expect(
+      callCreateOrder(
+        b.tableId,
+        [{ menu_item_id: b.menuItemId, quantity: 1 }],
+        uniqueKey("idem-cross-b"),
+        null,
+        orderInA.table_session_id,
+      ),
+    ).rejects.toThrow(/SESSION_CLOSED/);
   });
 });

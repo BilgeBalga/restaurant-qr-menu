@@ -10,5 +10,5 @@ export default async function StaffTablesPage() {
     return <p className="text-sm text-red-700">{result.message}</p>;
   }
 
-  return <TableBoard initialTables={result.data} restaurantId={membership.restaurantId} />;
+  return <TableBoard initialTables={result.data} restaurantId={membership.restaurantId} role={membership.role} />;
 }

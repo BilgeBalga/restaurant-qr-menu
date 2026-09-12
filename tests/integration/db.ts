@@ -12,6 +12,19 @@ const TEST_DATABASE_URL =
 
 export const sql = postgres(TEST_DATABASE_URL, { max: 10 });
 
+/**
+ * `orders.idempotency_key` is unique database-wide and this test DB persists
+ * across suite runs (see tests/integration/harness/) — a hardcoded literal
+ * key would collide with the row from the previous run and create_order
+ * would silently return that stale, unrelated order instead of a new one.
+ * Use this for every create_order call so each invocation gets its own key;
+ * call it once and reuse the returned value for tests that intentionally
+ * retry with the same key.
+ */
+export function uniqueKey(label: string): string {
+  return `${label}-${crypto.randomUUID()}`;
+}
+
 export type PgRole = "anon" | "authenticated" | "service_role";
 
 /**

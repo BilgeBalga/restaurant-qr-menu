@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { CategoryView, MenuItemView } from "@/app/actions/menu";
 import { useCart } from "@/components/customer/CartProvider";
 import { formatMoney as money } from "@/lib/format/money";
+import { MenuItemImage } from "@/components/ui/MenuItemImage";
 
 function ItemCard({ item, currency }: { item: MenuItemView; currency: string }) {
   const disabled = !item.isAvailable;
@@ -16,6 +17,12 @@ function ItemCard({ item, currency }: { item: MenuItemView; currency: string }) 
         disabled ? "pointer-events-none opacity-50" : "hover:border-[var(--color-bronze)]"
       }`}
     >
+      <MenuItemImage
+        name={item.name}
+        imageUrl={item.imageUrl}
+        className="h-20 w-20 shrink-0 rounded-md sm:h-24 sm:w-24"
+        monogramClassName="text-2xl"
+      />
       <div className="flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="font-display text-lg font-medium">{item.name}</h3>

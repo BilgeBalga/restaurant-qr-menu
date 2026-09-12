@@ -1,12 +1,13 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { getPublicEnv } from "@/lib/env";
+import { getSupabaseClientEnv } from "@/lib/env";
 
 /**
- * RLS-scoped client for use inside "use client" components. Nothing in
- * Phase 1 calls this yet — the login flow uses a server action instead —
- * but it's wired for Phase 4+ (cart, live tracking subscriptions).
+ * RLS-scoped client for use inside "use client" components (cart, live
+ * order tracking). Uses getSupabaseClientEnv(), not getPublicEnv() — this
+ * client has no need for NEXT_PUBLIC_APP_URL, and requiring it here would
+ * be an incidental coupling, not a real dependency.
  */
 export function createSupabaseBrowserClient() {
-  const env = getPublicEnv();
+  const env = getSupabaseClientEnv();
   return createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 }

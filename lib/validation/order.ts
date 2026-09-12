@@ -28,3 +28,27 @@ export const setOrderStatusInputSchema = z.object({
   status: z.enum(["new", "preparing", "ready", "completed", "cancelled"]),
   note: z.string().trim().max(500).optional(),
 });
+
+/**
+ * Staff order history filters — fed directly from a page's raw URL
+ * `searchParams` (all strings, possibly missing/garbage), so every field
+ * has a safe fallback via `.catch()` rather than rejecting the request.
+ * `status` omitted means "both completed and cancelled."
+ */
+export const orderHistoryFiltersSchema = z.object({
+  status: z
+    .enum(["completed", "cancelled"])
+    .optional()
+    .catch(undefined),
+  range: z.enum(["today", "last7", "last30", "all"]).catch("all").default("all"),
+  tableId: z.string().uuid().optional().catch(undefined),
+  search: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .catch(undefined),
+  page: z.coerce.number().int().min(1).catch(1).default(1),
+});
+
+export type OrderHistoryFilters = z.infer<typeof orderHistoryFiltersSchema>;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
 import { requireActiveMembership } from "@/lib/auth/session";
+import { can } from "@/lib/business/permissions";
 
 // Every authenticated staff screen is session- and tenant-dependent (§10).
 export const dynamic = "force-dynamic";
@@ -9,6 +10,14 @@ const NAV = [
   { href: "/staff/dashboard", label: "Dashboard" },
   { href: "/staff/orders", label: "Orders" },
   { href: "/staff/tables", label: "Tables" },
+  { href: "/staff/menu", label: "Menu" },
+];
+
+const HISTORY_NAV = [{ href: "/staff/history", label: "History" }];
+
+const ADMIN_NAV = [
+  { href: "/staff/staff", label: "Staff" },
+  { href: "/staff/settings", label: "Settings" },
 ];
 
 /**
@@ -27,7 +36,7 @@ export default async function StaffAppLayout({ children }: { children: React.Rea
         <div className="flex items-center gap-6">
           <span className="font-display text-lg font-semibold">Table-Side</span>
           <nav className="flex gap-4 text-sm">
-            {NAV.map((item) => (
+            {[...NAV, ...(can(membership.role, "history:read") ? HISTORY_NAV : []), ...(membership.role === "admin" ? ADMIN_NAV : [])].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

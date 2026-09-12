@@ -1,16 +1,17 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { getPublicEnv } from "@/lib/env";
+import { getSupabaseClientEnv } from "@/lib/env";
 
 /**
  * RLS-scoped client for use inside Server Components, server actions, and
  * route handlers (§10). Must be created fresh per request — cookies differ
  * per request — so this is a factory, never a module-level singleton.
+ * Uses getSupabaseClientEnv(), not getPublicEnv() — see browser.ts for why.
  */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
-  const env = getPublicEnv();
+  const env = getSupabaseClientEnv();
 
   return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {

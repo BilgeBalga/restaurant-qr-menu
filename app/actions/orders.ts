@@ -3,9 +3,17 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AppError, toActionResult, type ActionResult } from "@/lib/errors";
 import { requireActiveMembership } from "@/lib/auth/session";
-import { createOrderInputSchema, setOrderStatusInputSchema, type CreateOrderInput } from "@/lib/validation/order";
-import { canTransition, type OrderStatus } from "@/lib/business/orderStateMachine";
+import { logAuditEvent } from "@/lib/audit";
+import { getTableCookie, setTableCookie } from "@/lib/customer/tableSession";
+import {
+  createOrderInputSchema,
+  orderHistoryFiltersSchema,
+  setOrderStatusInputSchema,
+  type CreateOrderInput,
+} from "@/lib/validation/order";
+import { canTransition, TERMINAL_STATUSES, type OrderStatus } from "@/lib/business/orderStateMachine";
 import { can } from "@/lib/business/permissions";
+import { startOfDayInTimeZone, startOfNextDayInTimeZone } from "@/lib/business/timezone";
 
 export interface CreateOrderResult {
   orderId: string;
@@ -20,6 +28,16 @@ export interface CreateOrderResult {
  * server-side; this action's only job is shape validation (Zod) and
  * translating the RPC's result/errors into an ActionResult (§28) — it is
  * NOT where the pricing or availability guarantee lives.
+ *
+ * §18 closed-session detection: the httpOnly table cookie optionally
+ * remembers which table_session_id this browser last ordered into. That
+ * id (never anything client-supplied — read straight from the cookie) is
+ * passed to create_order, which rejects outright if staff have since
+ * closed that specific session — the stale-refresh scenario. A fresh QR
+ * scan resets the cookie with no session id (lib/customer/tableSession.ts),
+ * so it never blocks a genuinely new session at the same table. The cookie
+ * is advisory only, same as tableId already was: create_order is the
+ * actual enforcement layer regardless of what this action sends it.
  */
 export async function createOrder(input: CreateOrderInput): Promise<ActionResult<CreateOrderResult>> {
   const parsed = createOrderInputSchema.safeParse(input);
@@ -32,6 +50,9 @@ export async function createOrder(input: CreateOrderInput): Promise<ActionResult
   const { tableId, items, customerNote, idempotencyKey } = parsed.data;
   const supabase = await createSupabaseServerClient();
 
+  const tableCookie = await getTableCookie();
+  const knownSessionId = tableCookie?.tableId === tableId ? (tableCookie.sessionId ?? null) : null;
+
   const { data, error } = await supabase.rpc("create_order", {
     p_table_id: tableId,
     p_items: items.map((item) => ({
@@ -42,13 +63,25 @@ export async function createOrder(input: CreateOrderInput): Promise<ActionResult
     })),
     p_customer_note: customerNote ?? null,
     p_idempotency_key: idempotencyKey,
+    p_session_id: knownSessionId,
   });
 
   if (error) {
     return toActionResult(new AppError("CONFLICT", error.message, friendlyOrderError(error.message)));
   }
 
-  const row = data as { order_id: string; order_number: string; access_token: string; total_cents: number };
+  const row = data as {
+    order_id: string;
+    order_number: string;
+    access_token: string;
+    total_cents: number;
+    table_session_id: string;
+  };
+
+  if (tableCookie && tableCookie.tableId === tableId && tableCookie.sessionId !== row.table_session_id) {
+    await setTableCookie({ ...tableCookie, sessionId: row.table_session_id });
+  }
+
   return {
     ok: true,
     data: { orderId: row.order_id, orderNumber: row.order_number, accessToken: row.access_token, totalCents: row.total_cents },
@@ -69,6 +102,9 @@ function friendlyOrderError(message: string): string {
   if (message.startsWith("ORDERING_DISABLED")) return "This restaurant isn't taking orders right now.";
   if (message.startsWith("EMPTY_ORDER")) return "Your cart is empty.";
   if (message.startsWith("INVALID_QUANTITY")) return "Please choose a valid quantity.";
+  if (message.startsWith("SESSION_CLOSED")) {
+    return "This table session has ended. Please scan the QR code at your table to start a new session.";
+  }
   return "Something went wrong placing your order. Please try again.";
 }
 
@@ -276,6 +312,7 @@ export interface OrderDetailView extends OrderCardView {
   subtotalCents: number;
   taxCents: number;
   serviceChargeCents: number;
+  currency: string;
   optionsByItemIndex: { group: string; choice: string; priceDeltaCents: number }[][];
   statusHistory: OrderStatusEntry[];
 }
@@ -289,6 +326,7 @@ export async function getOrderDetail(orderId: string): Promise<ActionResult<Orde
     .select(
       `id, order_number, status, created_at, customer_note, total_cents, subtotal_cents, tax_cents, service_charge_cents,
        tables ( label ),
+       restaurants ( currency ),
        order_items ( name_snapshot, quantity, line_note, order_item_options ( group_name_snapshot, choice_name_snapshot, price_delta_cents_snapshot ) ),
        order_status_history ( previous_status, new_status, created_at )`,
     )
@@ -310,6 +348,7 @@ export async function getOrderDetail(orderId: string): Promise<ActionResult<Orde
     tax_cents: number;
     service_charge_cents: number;
     tables: { label: string } | { label: string }[] | null;
+    restaurants: { currency: string } | { currency: string }[] | null;
     order_items: {
       name_snapshot: string;
       quantity: number;
@@ -321,6 +360,7 @@ export async function getOrderDetail(orderId: string): Promise<ActionResult<Orde
 
   const row = data as Row;
   const table = Array.isArray(row.tables) ? row.tables[0] : row.tables;
+  const restaurant = Array.isArray(row.restaurants) ? row.restaurants[0] : row.restaurants;
 
   return {
     ok: true,
@@ -335,6 +375,7 @@ export async function getOrderDetail(orderId: string): Promise<ActionResult<Orde
       subtotalCents: row.subtotal_cents,
       taxCents: row.tax_cents,
       serviceChargeCents: row.service_charge_cents,
+      currency: restaurant?.currency ?? "USD",
       items: row.order_items.map((item) => ({ name: item.name_snapshot, quantity: item.quantity, lineNote: item.line_note })),
       optionsByItemIndex: row.order_items.map((item) =>
         item.order_item_options.map((o) => ({
@@ -359,11 +400,297 @@ export async function clearTable(tableId: string): Promise<ActionResult<null>> {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("clear_table", { p_table_id: tableId });
+  const { data, error } = await supabase.rpc("clear_table", { p_table_id: tableId });
 
   if (error) {
     return toActionResult(new AppError("INTERNAL", error.message, "Couldn't clear this table. Please try again."));
   }
 
+  // clear_table returns session_id: null when there was no open session to
+  // close (e.g. it auto-closed a moment earlier) — nothing to audit then.
+  const sessionId = (data as { session_id: string | null } | null)?.session_id ?? null;
+  if (sessionId) {
+    await logAuditEvent(supabase, {
+      restaurantId: membership.restaurantId,
+      action: "table.session.close",
+      entityType: "table_sessions",
+      entityId: sessionId,
+      newValue: { tableId, status: "closed" },
+    });
+  }
+
   return { ok: true, data: null };
+}
+
+const HISTORY_PAGE_SIZE = 20;
+/**
+ * Search resolves candidates from two independently-capped queries (below)
+ * before merging/paginating in memory — bounded, never an unbounded scan,
+ * per the feature's pagination/performance requirement.
+ */
+const HISTORY_SEARCH_CANDIDATE_CAP = 500;
+
+const HISTORY_ROW_SELECT = "id, order_number, status, created_at, total_cents, tables ( label )";
+
+export interface OrderHistoryRow {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  tableLabel: string;
+  createdAt: string;
+  totalCents: number;
+}
+
+export interface OrderHistoryTableOption {
+  id: string;
+  label: string;
+}
+
+/** The raw shape a page's `searchParams` naturally comes in as — parsed/defaulted by orderHistoryFiltersSchema below. */
+export interface OrderHistoryQueryInput {
+  status?: string;
+  range?: string;
+  tableId?: string;
+  search?: string;
+  page?: string | number;
+}
+
+export interface OrderHistoryResult {
+  orders: OrderHistoryRow[];
+  currency: string;
+  tableOptions: OrderHistoryTableOption[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+type HistoryRowSelect = {
+  id: string;
+  order_number: string;
+  status: OrderStatus;
+  created_at: string;
+  total_cents: number;
+  tables: { label: string } | { label: string }[] | null;
+};
+
+function toHistoryRow(row: HistoryRowSelect): OrderHistoryRow {
+  const table = Array.isArray(row.tables) ? row.tables[0] : row.tables;
+  return {
+    id: row.id,
+    orderNumber: row.order_number,
+    status: row.status,
+    tableLabel: table?.label ?? "—",
+    createdAt: row.created_at,
+    totalCents: row.total_cents,
+  };
+}
+
+interface HistoryBaseFilters {
+  restaurantId: string;
+  statuses: readonly OrderStatus[];
+  tableId?: string;
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
+/**
+ * Staff order history: completed/cancelled orders only — the live kanban
+ * (listActiveOrders) owns new/preparing/ready. RLS (orders_select_staff)
+ * already scopes every query below to the caller's own restaurant; the
+ * explicit .eq("restaurant_id", ...) filters are defense in depth, matching
+ * the convention already used in dashboard.ts/tables.ts.
+ *
+ * Search (order number / table label) deliberately avoids building a raw
+ * `.or()` filter string from user input: PostgREST's composite-filter
+ * syntax treats commas/parens/periods as structural, so interpolating a
+ * search term into one is an injection risk — a crafted term could smuggle
+ * in an extra clause (e.g. reaching past the completed/cancelled
+ * restriction). Instead, matching table ids are resolved first, then two
+ * separately-parameterized, capped queries (order_number ILIKE, table_id
+ * IN) are merged and paginated server-side.
+ */
+export async function listOrderHistory(rawFilters: OrderHistoryQueryInput): Promise<ActionResult<OrderHistoryResult>> {
+  const membership = await requireActiveMembership();
+
+  if (!can(membership.role, "history:read")) {
+    return toActionResult(
+      new AppError("FORBIDDEN", "role lacks history:read", "You don't have permission to view order history."),
+    );
+  }
+
+  const parsed = orderHistoryFiltersSchema.safeParse(rawFilters);
+  if (!parsed.success) {
+    return toActionResult(new AppError("VALIDATION_ERROR", parsed.error.message, "Those filters don't look right."));
+  }
+  const filters = parsed.data;
+  const supabase = await createSupabaseServerClient();
+
+  // "Today"/"last N days" depend on the restaurant's own timezone, not the
+  // server process's — same fix as the dashboard's "revenue today" (§17).
+  const { data: restaurantRow } = await supabase
+    .from("restaurants")
+    .select("currency, timezone")
+    .eq("id", membership.restaurantId)
+    .single();
+  const restaurant = restaurantRow as { currency: string; timezone: string } | null;
+  const currency = restaurant?.currency ?? "USD";
+  const timezone = restaurant?.timezone ?? "UTC";
+
+  const { data: tableRows } = await supabase
+    .from("tables")
+    .select("id, label")
+    .eq("restaurant_id", membership.restaurantId)
+    .order("label", { ascending: true });
+  const tableOptions = ((tableRows as { id: string; label: string }[] | null) ?? []).map((t) => ({ id: t.id, label: t.label }));
+
+  const statuses = filters.status ? [filters.status] : TERMINAL_STATUSES;
+
+  let dateFrom: string | null = null;
+  let dateTo: string | null = null;
+  if (filters.range !== "all") {
+    const now = new Date();
+    const windowDays = filters.range === "today" ? 0 : filters.range === "last7" ? 6 : 29;
+    const from = windowDays === 0 ? now : new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+    dateFrom = startOfDayInTimeZone(timezone, from).toISOString();
+    dateTo = startOfNextDayInTimeZone(timezone, now).toISOString();
+  }
+
+  // Applied (inline, below) identically to the list query, the count query,
+  // and both search candidate queries — every path AND-s the same filters.
+  const baseFilters: HistoryBaseFilters = {
+    restaurantId: membership.restaurantId,
+    statuses,
+    tableId: filters.tableId,
+    dateFrom,
+    dateTo,
+  };
+
+  const search = filters.search;
+
+  if (!search) {
+    const from = (filters.page - 1) * HISTORY_PAGE_SIZE;
+    const to = from + HISTORY_PAGE_SIZE - 1;
+    let listQuery = supabase
+      .from("orders")
+      .select(HISTORY_ROW_SELECT)
+      .eq("restaurant_id", baseFilters.restaurantId)
+      .in("status", baseFilters.statuses);
+    if (baseFilters.tableId) listQuery = listQuery.eq("table_id", baseFilters.tableId);
+    if (baseFilters.dateFrom) listQuery = listQuery.gte("created_at", baseFilters.dateFrom);
+    if (baseFilters.dateTo) listQuery = listQuery.lt("created_at", baseFilters.dateTo);
+    const { data, error } = await listQuery.order("created_at", { ascending: false }).range(from, to).returns<HistoryRowSelect[]>();
+
+    if (error) {
+      return toActionResult(new AppError("INTERNAL", error.message, "Couldn't load order history right now."));
+    }
+
+    let countQuery = supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("restaurant_id", baseFilters.restaurantId)
+      .in("status", baseFilters.statuses);
+    if (baseFilters.tableId) countQuery = countQuery.eq("table_id", baseFilters.tableId);
+    if (baseFilters.dateFrom) countQuery = countQuery.gte("created_at", baseFilters.dateFrom);
+    if (baseFilters.dateTo) countQuery = countQuery.lt("created_at", baseFilters.dateTo);
+    const { count: totalCount, error: countError } = await countQuery;
+    if (countError) {
+      return toActionResult(new AppError("INTERNAL", countError.message, "Couldn't load order history right now."));
+    }
+
+    return {
+      ok: true,
+      data: {
+        orders: (data ?? []).map(toHistoryRow),
+        currency,
+        tableOptions,
+        page: filters.page,
+        pageSize: HISTORY_PAGE_SIZE,
+        totalCount: totalCount ?? 0,
+        totalPages: Math.max(1, Math.ceil((totalCount ?? 0) / HISTORY_PAGE_SIZE)),
+      },
+    };
+  }
+
+  // Search path: resolve candidate order ids from two bounded, safely
+  // parameterized queries, merge/dedupe/sort, then paginate in memory.
+  const { data: matchingTables } = await supabase
+    .from("tables")
+    .select("id")
+    .eq("restaurant_id", membership.restaurantId)
+    .ilike("label", `%${search}%`);
+  const matchingTableIds = ((matchingTables as { id: string }[] | null) ?? []).map((t) => t.id);
+
+  function candidateBaseQuery() {
+    let q = supabase
+      .from("orders")
+      .select("id, created_at")
+      .eq("restaurant_id", baseFilters.restaurantId)
+      .in("status", baseFilters.statuses);
+    if (baseFilters.tableId) q = q.eq("table_id", baseFilters.tableId);
+    if (baseFilters.dateFrom) q = q.gte("created_at", baseFilters.dateFrom);
+    if (baseFilters.dateTo) q = q.lt("created_at", baseFilters.dateTo);
+    return q;
+  }
+
+  const candidateQueries = [
+    candidateBaseQuery()
+      .ilike("order_number", `%${search}%`)
+      .order("created_at", { ascending: false })
+      .limit(HISTORY_SEARCH_CANDIDATE_CAP)
+      .returns<{ id: string; created_at: string }[]>(),
+  ];
+  if (matchingTableIds.length > 0) {
+    candidateQueries.push(
+      candidateBaseQuery()
+        .in("table_id", matchingTableIds)
+        .order("created_at", { ascending: false })
+        .limit(HISTORY_SEARCH_CANDIDATE_CAP)
+        .returns<{ id: string; created_at: string }[]>(),
+    );
+  }
+
+  const candidateResults = await Promise.all(candidateQueries);
+  const firstError = candidateResults.find((r) => r.error)?.error;
+  if (firstError) {
+    return toActionResult(new AppError("INTERNAL", firstError.message, "Couldn't search order history right now."));
+  }
+
+  const merged = new Map<string, string>(); // id -> created_at
+  for (const result of candidateResults) {
+    for (const row of result.data ?? []) merged.set(row.id, row.created_at);
+  }
+  const sortedIds = [...merged.entries()].sort((a, b) => b[1].localeCompare(a[1])).map(([id]) => id);
+
+  const totalCount = sortedIds.length;
+  const from = (filters.page - 1) * HISTORY_PAGE_SIZE;
+  const pageIds = sortedIds.slice(from, from + HISTORY_PAGE_SIZE);
+
+  let orders: OrderHistoryRow[] = [];
+  if (pageIds.length > 0) {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(HISTORY_ROW_SELECT)
+      .eq("restaurant_id", baseFilters.restaurantId)
+      .in("id", pageIds)
+      .returns<HistoryRowSelect[]>();
+    if (error) {
+      return toActionResult(new AppError("INTERNAL", error.message, "Couldn't search order history right now."));
+    }
+    const rowById = new Map((data ?? []).map((row) => [row.id, toHistoryRow(row)]));
+    orders = pageIds.map((id) => rowById.get(id)).filter((row): row is OrderHistoryRow => row !== undefined);
+  }
+
+  return {
+    ok: true,
+    data: {
+      orders,
+      currency,
+      tableOptions,
+      page: filters.page,
+      pageSize: HISTORY_PAGE_SIZE,
+      totalCount,
+      totalPages: Math.max(1, Math.ceil(totalCount / HISTORY_PAGE_SIZE)),
+    },
+  };
 }
