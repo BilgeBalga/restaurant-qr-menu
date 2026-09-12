@@ -881,6 +881,16 @@ export async function setMenuItemAvailability(input: { id: string; isAvailable: 
  * this fails with a foreign-key violation for any item that appears in
  * even one historical order; caught and turned into a friendly
  * "deactivate instead" message.
+ *
+ * Bug fix: a never-ordered item can still have had an image uploaded to
+ * it — nothing previously cleaned up that Storage object when the row
+ * itself was deleted (deleteMenuItemImage/uploadMenuItemImage only ever
+ * run when the item still exists), leaving it orphaned forever. Removed
+ * only after the row delete succeeds, and only when the URL is actually a
+ * menu-images object under this restaurant — same guard as
+ * deleteMenuItemImage/uploadMenuItemImage. A failed Storage removal is
+ * logged but never fails or reverts the delete itself; the row is already
+ * gone, and that's the guarantee that matters.
  */
 export async function deleteMenuItem(input: { id: string }): Promise<ActionResult<null>> {
   const membership = await requireActiveMembership();
@@ -898,7 +908,7 @@ export async function deleteMenuItem(input: { id: string }): Promise<ActionResul
     .delete()
     .eq("id", parsed.data.id)
     .eq("restaurant_id", membership.restaurantId)
-    .select("id, name")
+    .select("id, name, image_url")
     .single();
 
   if (error) {
@@ -911,6 +921,12 @@ export async function deleteMenuItem(input: { id: string }): Promise<ActionResul
   }
   if (!data) {
     return toActionResult(new AppError("NOT_FOUND", "item not found", "Couldn't find that item."));
+  }
+
+  const imagePath = data.image_url ? extractMenuImageObjectPath(data.image_url) : null;
+  if (imagePath && imagePath.startsWith(`${membership.restaurantId}/`)) {
+    const { error: removeError } = await supabase.storage.from(MENU_IMAGES_BUCKET).remove([imagePath]);
+    if (removeError) console.error("Failed to remove deleted menu item's image:", removeError);
   }
 
   await logAuditEvent(supabase, {

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { check, date, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { restaurants, staffUsers, tableSessions, tables } from "./core";
 import { orderStatusEnum } from "./enums";
 import { menuItems } from "./menu";
@@ -26,6 +26,17 @@ export const orders = pgTable(
       .notNull()
       .references(() => tableSessions.id, { onDelete: "restrict" }),
     orderNumber: text("order_number").notNull(),
+    /**
+     * The restaurant-LOCAL calendar date next_order_number() minted
+     * orderNumber for (db/migrations/0008_order_number_daily_scope.sql)
+     * — order numbering resets daily by design, so order_number text
+     * alone can repeat across different days; this is what actually
+     * disambiguates them at the database level. Computed once in
+     * create_order via restaurants.timezone, never re-derived from
+     * created_at (which is UTC and says nothing about the restaurant's
+     * own calendar).
+     */
+    orderDate: date("order_date", { mode: "string" }).notNull(),
     status: orderStatusEnum("status").notNull().default("new"),
     subtotalCents: integer("subtotal_cents").notNull(),
     taxCents: integer("tax_cents").notNull().default(0),
@@ -40,7 +51,11 @@ export const orders = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("orders_restaurant_order_number_unique").on(table.restaurantId, table.orderNumber),
+    uniqueIndex("orders_restaurant_order_date_order_number_unique").on(
+      table.restaurantId,
+      table.orderDate,
+      table.orderNumber,
+    ),
     check("orders_subtotal_non_negative", sql`${table.subtotalCents} >= 0`),
     check("orders_tax_non_negative", sql`${table.taxCents} >= 0`),
     check("orders_service_charge_non_negative", sql`${table.serviceChargeCents} >= 0`),

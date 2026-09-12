@@ -34,10 +34,15 @@ export async function getDashboardMetrics(): Promise<ActionResult<DashboardMetri
   const startOfToday = startOfDayInTimeZone(timezone);
 
   const [statusCounts, completedToday, openSessions] = await Promise.all([
-    supabase.from("orders").select("status").in("status", ["new", "preparing", "ready"]),
+    supabase
+      .from("orders")
+      .select("status")
+      .eq("restaurant_id", membership.restaurantId)
+      .in("status", ["new", "preparing", "ready"]),
     supabase
       .from("orders")
       .select("total_cents")
+      .eq("restaurant_id", membership.restaurantId)
       .eq("status", "completed")
       .gte("updated_at", startOfToday.toISOString()),
     supabase.from("table_sessions").select("id").eq("restaurant_id", membership.restaurantId).eq("status", "open"),
