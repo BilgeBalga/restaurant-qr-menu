@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
-import { requireActiveMembership } from "@/lib/auth/session";
+import { getStaffContext, requireActiveMembership } from "@/lib/auth/session";
 import { can } from "@/lib/business/permissions";
 
 // Every authenticated staff screen is session- and tenant-dependent (§10).
@@ -26,9 +26,17 @@ const ADMIN_NAV = [
  * as ..." nav before there's a session. requireActiveMembership() is the
  * real authorization check (§19 finding); this file is what actually
  * gates every /staff/(app)/* page, not just the redirect in proxy.ts.
+ *
+ * getStaffContext() alongside it (SaaS Phase 5) is free — both go
+ * through the same React cache() per request, so this is the same
+ * restaurant_staff query, not a second one — used only to decide whether
+ * to show the "Switch restaurant" link, never for authorization itself
+ * (requireActiveMembership() above already fully resolved that).
  */
 export default async function StaffAppLayout({ children }: { children: React.ReactNode }) {
   const membership = await requireActiveMembership();
+  const ctx = await getStaffContext();
+  const hasMultipleRestaurants = (ctx?.memberships.length ?? 0) > 1;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -52,6 +60,14 @@ export default async function StaffAppLayout({ children }: { children: React.Rea
           <span className="rounded-full border border-[var(--color-border)] px-2.5 py-0.5 font-mono text-xs uppercase tracking-wide text-[var(--color-bronze-strong)]">
             {membership.role}
           </span>
+          {hasMultipleRestaurants ? (
+            <Link
+              href="/staff/select-restaurant"
+              className="rounded-md border border-[var(--color-border)] px-3 py-1.5 font-medium hover:bg-[var(--color-ivory)]"
+            >
+              Switch restaurant
+            </Link>
+          ) : null}
           <form action={signOut}>
             <button
               type="submit"

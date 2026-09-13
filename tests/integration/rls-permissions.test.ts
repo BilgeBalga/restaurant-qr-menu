@@ -86,6 +86,123 @@ describe("RLS — anonymous (customer) read permissions", () => {
   });
 });
 
+/**
+ * Bug #3 (Phase 5 live acceptance test) — categories/menu_items (and,
+ * found while tracing getMenu()'s/resolveCurrentTable()'s full read path,
+ * restaurants/option_groups/option_choices) each had exactly two SELECT
+ * policies: *_select_anon (TO anon) and *_select_staff (TO authenticated,
+ * USING is_staff_of(...)). An authenticated user who is NOT staff at the
+ * restaurant they're browsing as a customer — e.g. a staff member of a
+ * DIFFERENT restaurant, signed into /staff in the same browser, scanning
+ * a QR code — matched neither policy and got zero rows: an empty menu, or
+ * (via restaurants) "We couldn't find your table" outright. Confirmed
+ * live and root-caused against the real demo restaurant.
+ *
+ * The fix (db/migrations/0014_public_menu_authenticated_access.sql) adds
+ * one additional OR'd SELECT policy per table, TO authenticated, with the
+ * EXACT SAME condition as that table's existing anon policy — never
+ * anything broader — mirroring the additive-policy pattern already used
+ * by 0013_platform_admin_read_access.sql. These tests below intentionally
+ * mirror the "RLS — anonymous (customer) read permissions" tests above,
+ * one-for-one, but as an authenticated non-staff user instead of anon —
+ * proving parity, not just "something" became visible.
+ */
+describe("RLS — authenticated non-staff (customer) read permissions", () => {
+  it("an authenticated user with no membership at restaurant X can read X's active menu items, categories, restaurant row, and option groups/choices", async () => {
+    const restaurantX = await createTestRestaurant();
+    const elsewhere = await createTestRestaurant(); // a genuinely different restaurant — elsewhere.staffId has no relationship to restaurantX at all
+
+    const [items, categories, restaurant, optionGroups, optionChoices] = await withRole("authenticated", elsewhere.staffId, async (conn) => {
+      return Promise.all([
+        conn`SELECT id FROM menu_items WHERE id = ${restaurantX.menuItemId}::uuid`,
+        conn`SELECT id FROM categories WHERE id = ${restaurantX.categoryId}::uuid`,
+        conn`SELECT id FROM restaurants WHERE id = ${restaurantX.restaurantId}::uuid`,
+        conn`SELECT id FROM option_groups WHERE id = ${restaurantX.optionGroupId}::uuid`,
+        conn`SELECT id FROM option_choices WHERE id = ${restaurantX.optionChoiceId}::uuid`,
+      ]);
+    });
+
+    expect(items).toHaveLength(1);
+    expect(categories).toHaveLength(1);
+    expect(restaurant).toHaveLength(1);
+    expect(optionGroups).toHaveLength(1);
+    expect(optionChoices).toHaveLength(1);
+  });
+
+  it("same authenticated non-staff user sees a sold-out (is_available=false) item — parity with anon, not broader", async () => {
+    const restaurantX = await createTestRestaurant();
+    const elsewhere = await createTestRestaurant();
+    await sql`UPDATE menu_items SET is_available = false WHERE id = ${restaurantX.menuItemId}`;
+
+    const rows = await withRole("authenticated", elsewhere.staffId, async (conn) => {
+      return conn`SELECT id, is_available FROM menu_items WHERE id = ${restaurantX.menuItemId}::uuid`;
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.is_available).toBe(false);
+  });
+
+  it("same authenticated non-staff user cannot see a soft-deleted (is_active=false) item — parity with anon, nothing broader granted", async () => {
+    const restaurantX = await createTestRestaurant();
+    const elsewhere = await createTestRestaurant();
+    await withRole("authenticated", restaurantX.adminId, async (conn) => {
+      return conn`UPDATE menu_items SET is_active = false WHERE id = ${restaurantX.menuItemId}::uuid`;
+    });
+
+    const rows = await withRole("authenticated", elsewhere.staffId, async (conn) => {
+      return conn`SELECT id FROM menu_items WHERE id = ${restaurantX.menuItemId}::uuid`;
+    });
+
+    expect(rows).toHaveLength(0);
+  });
+
+  it("an authenticated non-staff user still cannot read staff-only data (tables directly, orders, staff_users, restaurant_staff, audit_logs) — the fix must not accidentally grant this", async () => {
+    const restaurantX = await createTestRestaurant();
+    const elsewhere = await createTestRestaurant();
+
+    // Unlike anon (which has no GRANT at all on these tables — see the
+    // "RLS — anonymous" block above), `authenticated` already holds a
+    // table-level GRANT SELECT on every one of these (0002_rls_policies.sql,
+    // predating this fix) so staff can read their OWN restaurant's data.
+    // That means an unrelated authenticated caller's query is permitted at
+    // the grant level and RLS (is_staff_of) filters it down to zero rows,
+    // not a thrown "permission denied" — the correct thing to assert here
+    // is an empty result, not a rejection. None of this is new; it's the
+    // same behavior this fix must leave untouched.
+    await withRole("authenticated", elsewhere.staffId, async (conn) => {
+      expect(await conn`SELECT id FROM tables WHERE id = ${restaurantX.tableId}::uuid`).toHaveLength(0);
+      expect(await conn`SELECT id FROM orders WHERE restaurant_id = ${restaurantX.restaurantId}::uuid`).toHaveLength(0);
+      expect(await conn`SELECT id FROM staff_users WHERE id = ${restaurantX.adminId}::uuid`).toHaveLength(0);
+      expect(await conn`SELECT id FROM restaurant_staff WHERE restaurant_id = ${restaurantX.restaurantId}::uuid`).toHaveLength(0);
+      expect(await conn`SELECT id FROM audit_logs WHERE restaurant_id = ${restaurantX.restaurantId}::uuid`).toHaveLength(0);
+    });
+  });
+
+  it("anon behavior is unaffected by this migration (regression)", async () => {
+    const fx = await createTestRestaurant();
+
+    const rows = await withRole("anon", null, async (conn) => {
+      return conn`SELECT id FROM menu_items WHERE id = ${fx.menuItemId}::uuid`;
+    });
+    expect(rows).toHaveLength(1);
+
+    await expect(
+      withRole("anon", null, async (conn) => {
+        return conn`SELECT id FROM tables WHERE id = ${fx.tableId}::uuid`;
+      }),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  it("a staff user can still use the customer menu flow at their OWN restaurant, unaffected by the new policy", async () => {
+    const fx = await createTestRestaurant();
+
+    const rows = await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT id FROM menu_items WHERE id = ${fx.menuItemId}::uuid`;
+    });
+    expect(rows).toHaveLength(1);
+  });
+});
+
 describe("RLS — staff permissions", () => {
 
   it("non-admin staff cannot create a menu item; admin can", async () => {

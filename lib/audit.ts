@@ -14,7 +14,8 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient
 export async function logAuditEvent(
   supabase: SupabaseServerClient,
   params: {
-    restaurantId: string;
+    /** null only for a genuinely platform-level event with no restaurant to attach to (SaaS Phase 2) — every restaurant-scoped action still always passes a real id. */
+    restaurantId: string | null;
     action: string;
     entityType: string;
     entityId: string;

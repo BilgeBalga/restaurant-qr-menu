@@ -64,9 +64,21 @@ describe("multi-tenant isolation", () => {
     expect(row!.status).toBe("new");
   });
 
-  it("staff of restaurant A cannot see restaurant B's menu items via staff SELECT", async () => {
+  // Updated for db/migrations/0014_public_menu_authenticated_access.sql
+  // (Phase 5 live acceptance Bug #3 fix): an ACTIVE menu item's row is
+  // now intentionally, publicly readable by any authenticated user —
+  // matching anon exactly, the same as scanning that restaurant's own QR
+  // code would show. That's the fix working as designed, not a leak, so
+  // it can no longer stand in for "staff SELECT isolates tenants." An
+  // INACTIVE (soft-deleted) item isn't public either way — is_staff_of
+  // is still the ONLY thing that can grant it — so it's what actually
+  // still proves staff-scoped isolation here.
+  it("staff of restaurant A cannot see restaurant B's INACTIVE menu items via staff SELECT (active items are now intentionally public — see rls-permissions.test.ts)", async () => {
     const a = await createTestRestaurant();
     const b = await createTestRestaurant();
+    await withRole("authenticated", b.adminId, async (conn) => {
+      return conn`UPDATE menu_items SET is_active = false WHERE id = ${b.menuItemId}::uuid`;
+    });
 
     const rows = await withRole("authenticated", a.staffId, async (conn) => {
       return conn`SELECT id FROM menu_items WHERE id = ${b.menuItemId}`;

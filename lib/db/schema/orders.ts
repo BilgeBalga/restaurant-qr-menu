@@ -140,9 +140,13 @@ export const orderStatusHistory = pgTable("order_status_history", {
  */
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id, { onDelete: "restrict" }),
+  /**
+   * Nullable since SaaS Phase 2 (db/migrations/0011_platform_admin_foundation.sql)
+   * — every restaurant-scoped event still always sets this; NULL is
+   * reserved for a genuinely platform-level event (e.g. a future
+   * "platform.admin.grant"), which has no restaurant to attach to.
+   */
+  restaurantId: uuid("restaurant_id").references(() => restaurants.id, { onDelete: "restrict" }),
   actorStaffId: uuid("actor_staff_id").references(() => staffUsers.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   entityType: text("entity_type").notNull(),

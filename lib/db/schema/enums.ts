@@ -8,6 +8,21 @@ import { pgEnum } from "drizzle-orm/pg-core";
  */
 export const staffRoleEnum = pgEnum("staff_role", ["admin", "manager", "staff", "kitchen"]);
 
+/**
+ * Restaurant lifecycle (SaaS Phase 1) — replaces the old plain is_active
+ * boolean, which couldn't express "half-provisioned" separately from
+ * "platform-suspended" or "owner-archived". "provisioning" must never be
+ * reachable through any customer/staff-facing check — a restaurant only
+ * becomes visible to anyone once provision_restaurant() flips it to
+ * "active" in the same transaction that creates its owner membership.
+ */
+export const restaurantStatusEnum = pgEnum("restaurant_status", [
+  "provisioning",
+  "active",
+  "suspended",
+  "archived",
+]);
+
 export const tableSessionStatusEnum = pgEnum("table_session_status", ["open", "closed"]);
 
 export const orderStatusEnum = pgEnum("order_status", [

@@ -64,6 +64,48 @@
       "when": 1789299999999,
       "tag": "0008_order_number_daily_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789399999999,
+      "tag": "0009_tenant_query_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789499999999,
+      "tag": "0010_restaurant_lifecycle_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789599999999,
+      "tag": "0011_platform_admin_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789699999999,
+      "tag": "0012_provision_restaurant",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789799999999,
+      "tag": "0013_platform_admin_read_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789899999999,
+      "tag": "0014_public_menu_authenticated_access",
+      "breakpoints": true
     }
   ]
 }

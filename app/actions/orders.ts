@@ -99,6 +99,7 @@ function friendlyOrderError(message: string): string {
     return name ? `${name} is no longer available — remove it and try again.` : "One of the selected options is no longer available.";
   }
   if (message.startsWith("TABLE_INACTIVE")) return "This table isn't currently in service.";
+  if (message.startsWith("RESTAURANT_INACTIVE")) return "This restaurant isn't currently available.";
   if (message.startsWith("ORDERING_DISABLED")) return "This restaurant isn't taking orders right now.";
   if (message.startsWith("EMPTY_ORDER")) return "Your cart is empty.";
   if (message.startsWith("INVALID_QUANTITY")) return "Please choose a valid quantity.";
@@ -218,9 +219,36 @@ export async function setOrderStatus(input: {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data: current } = await supabase.from("orders").select("status").eq("id", parsed.data.orderId).single();
 
-  if (current && !canTransition(current.status as OrderStatus, parsed.data.status, membership.role)) {
+  // §Bug #2 fix: scoped to membership.restaurantId — the trusted,
+  // server-derived active restaurant — not just any restaurant the
+  // caller happens to be staff at. This is also what stops the RPC call
+  // below from ever running for a cross-tenant order: set_order_status
+  // is SECURITY DEFINER and re-derives the caller's ROLE from the
+  // order's true restaurant_id (staff_role_for), not from what's
+  // "selected" — so a dual-membership staffer with a genuine (if
+  // different) role at the order's real restaurant could previously
+  // reach and pass that RPC's own check even while a DIFFERENT
+  // restaurant was active here. The fix is not to trust a client- or
+  // RPC-supplied restaurant id, but to never call the RPC at all unless
+  // this pre-check already proves the order belongs to the active
+  // restaurant.
+  const { data: current, error: currentError } = await supabase
+    .from("orders")
+    .select("status")
+    .eq("id", parsed.data.orderId)
+    .eq("restaurant_id", membership.restaurantId)
+    .maybeSingle();
+
+  if (currentError) {
+    return toActionResult(new AppError("INTERNAL", currentError.message, "Couldn't update this order. Please try again."));
+  }
+
+  if (!current) {
+    return toActionResult(new AppError("NOT_FOUND", "order not found in active restaurant", "Order not found."));
+  }
+
+  if (!canTransition(current.status as OrderStatus, parsed.data.status, membership.role)) {
     return toActionResult(
       new AppError("CONFLICT", `illegal transition ${current.status} -> ${parsed.data.status}`, "This order already moved on — refresh to see its current status."),
     );
@@ -257,9 +285,18 @@ export interface OrderCardView {
   totalCents: number;
 }
 
-/** Kanban feed (§17) — RLS already scopes this to the caller's own restaurant. */
+/**
+ * Kanban feed (§17). §Bug #2 fix: explicitly scoped to
+ * membership.restaurantId. RLS (is_staff_of) only proves the caller is
+ * staff at *a* restaurant they belong to — for a dual-membership staffer
+ * it legitimately returns rows from EVERY restaurant they're staff at,
+ * not just the one currently selected, which is exactly what let one
+ * restaurant's active-order board silently include another restaurant's
+ * orders. The active-order board must contain only the selected
+ * restaurant's orders.
+ */
 export async function listActiveOrders(): Promise<ActionResult<OrderCardView[]>> {
-  await requireActiveMembership();
+  const membership = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -269,6 +306,7 @@ export async function listActiveOrders(): Promise<ActionResult<OrderCardView[]>>
        tables ( label ),
        order_items ( name_snapshot, quantity, line_note )`,
     )
+    .eq("restaurant_id", membership.restaurantId)
     .in("status", ["new", "preparing", "ready"])
     .order("created_at", { ascending: true });
 
@@ -318,9 +356,16 @@ export interface OrderDetailView extends OrderCardView {
 }
 
 export async function getOrderDetail(orderId: string): Promise<ActionResult<OrderDetailView>> {
-  await requireActiveMembership();
+  const membership = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
 
+  // §Bug #2 fix: scoped to the caller's currently-ACTIVE restaurant, not
+  // just any restaurant RLS would let them see. is_staff_of(restaurant_id)
+  // answers "is this staff at *a* restaurant they belong to," not "is
+  // this their *selected* one" — a dual-membership staffer could
+  // otherwise read another restaurant's order while a different
+  // restaurant is active. membership.restaurantId comes from
+  // requireActiveMembership(), never from the client.
   const { data, error } = await supabase
     .from("orders")
     .select(
@@ -331,6 +376,7 @@ export async function getOrderDetail(orderId: string): Promise<ActionResult<Orde
        order_status_history ( previous_status, new_status, created_at )`,
     )
     .eq("id", orderId)
+    .eq("restaurant_id", membership.restaurantId)
     .single();
 
   if (error || !data) {
@@ -400,6 +446,30 @@ export async function clearTable(tableId: string): Promise<ActionResult<null>> {
   }
 
   const supabase = await createSupabaseServerClient();
+
+  // §Bug #2-shaped fix, found during the post-fix security audit (same
+  // pattern, a different entity): clear_table is SECURITY DEFINER and
+  // re-derives role from the TABLE's true restaurant_id, exactly like
+  // set_order_status did for orders — so without this pre-check, a
+  // dual-membership staffer could clear a different restaurant's table
+  // while a different one is active. Mirrors tablesAdmin.ts's
+  // tableBelongsToRestaurant guard, which already does this correctly
+  // before generate_table_qr_token.
+  const { data: tableRow, error: tableError } = await supabase
+    .from("tables")
+    .select("id")
+    .eq("id", tableId)
+    .eq("restaurant_id", membership.restaurantId)
+    .maybeSingle();
+
+  if (tableError) {
+    return toActionResult(new AppError("INTERNAL", tableError.message, "Couldn't clear this table. Please try again."));
+  }
+
+  if (!tableRow) {
+    return toActionResult(new AppError("NOT_FOUND", "table not found in active restaurant", "Table not found."));
+  }
+
   const { data, error } = await supabase.rpc("clear_table", { p_table_id: tableId });
 
   if (error) {

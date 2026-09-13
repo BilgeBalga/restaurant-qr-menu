@@ -13,7 +13,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { staffRoleEnum, tableSessionStatusEnum } from "./enums";
+import { restaurantStatusEnum, staffRoleEnum, tableSessionStatusEnum } from "./enums";
 
 /**
  * Restaurants, staff, tables, QR tokens, and dining sessions (§7 "Core
@@ -28,7 +28,10 @@ export const restaurants = pgTable("restaurants", {
   slug: text("slug").notNull().unique(),
   timezone: text("timezone").notNull().default("UTC"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
-  isActive: boolean("is_active").notNull().default(true),
+  /** SaaS Phase 1 — replaces the old is_active boolean (db/migrations/0010_restaurant_lifecycle_status.sql). Only a SECURITY DEFINER RPC may change this — see that migration's column-level GRANT narrowing. */
+  status: restaurantStatusEnum("status").notNull().default("active"),
+  /** Informational only — who the platform contacts/bills for this tenant. Never checked by RLS or can(); a restaurant's real admins keep exactly the permissions restaurant_staff already gives them. */
+  ownerStaffUserId: uuid("owner_staff_user_id").references(() => staffUsers.id, { onDelete: "set null" }),
   orderingEnabled: boolean("ordering_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -75,6 +78,22 @@ export const staffUsers = pgTable("staff_users", {
   id: uuid("id").primaryKey(),
   email: text("email").notNull(),
   fullName: text("full_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * SaaS Phase 2 — platform-level access, structurally separate from every
+ * restaurant role: no restaurant_id column exists here at all, so there
+ * is no field to accidentally scope or misread as a tenant permission.
+ * Read-only via RLS for now (db/migrations/0011_platform_admin_foundation.sql)
+ * — no grant/revoke action exists yet, so writes are service-role/
+ * superuser only until that action is built.
+ */
+export const platformAdmins = pgTable("platform_admins", {
+  staffUserId: uuid("staff_user_id")
+    .primaryKey()
+    .references(() => staffUsers.id, { onDelete: "cascade" }),
+  grantedBy: uuid("granted_by").references(() => staffUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

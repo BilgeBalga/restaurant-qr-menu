@@ -85,19 +85,42 @@ describe("menu item image — tenant isolation", () => {
     expect(row!.image_url).toBeNull();
   });
 
-  it("an admin of restaurant A cannot read restaurant B's menu item at all (staff SELECT), image_url included", async () => {
+  // Updated for db/migrations/0014_public_menu_authenticated_access.sql
+  // (Phase 5 live acceptance Bug #3 fix): an ACTIVE menu item's row —
+  // image_url included — was already fully anon-readable before this
+  // fix (menu_items_select_anon has no column restriction), so A's
+  // admin now legitimately sees it too via the new
+  // menu_items_select_authenticated_public policy, matching anon
+  // exactly. That's intentional, not a leak: "any authenticated user
+  // who is not staff there" is required to see the same public data
+  // anon does. What tenant isolation actually still guarantees here is
+  // covered by the sibling "cannot set image_url" test above (no
+  // cross-tenant WRITE) and by the case below (no read of an INACTIVE
+  // item, matching anon's own is_active boundary — not broader).
+  it("an admin of restaurant A can read restaurant B's ACTIVE item (image_url included) — public data, matching anon", async () => {
     const a = await createTestRestaurant();
     const b = await createTestRestaurant();
     const url = `https://project-ref.supabase.co/storage/v1/object/public/menu-images/${b.restaurantId}/${b.menuItemId}/${uniqueKey("f")}.jpg`;
-    // Set via B's own admin — enforce_menu_item_update_scope fires for every
-    // caller (including a raw superuser connection with no auth.uid()), so
-    // fixture setup for an admin-only column must go through withRole too.
     await withRole("authenticated", b.adminId, async (conn) => {
       return conn`UPDATE menu_items SET image_url = ${url} WHERE id = ${b.menuItemId}::uuid`;
     });
 
     const visibleToA = await withRole("authenticated", a.adminId, async (conn) => {
       return conn`SELECT id, image_url FROM menu_items WHERE id = ${b.menuItemId}::uuid`;
+    });
+    expect(visibleToA).toHaveLength(1);
+    expect(visibleToA[0]?.image_url).toBe(url);
+  });
+
+  it("an admin of restaurant A cannot read restaurant B's INACTIVE (soft-deleted) item — the public/authenticated boundary is is_active, not staff membership", async () => {
+    const a = await createTestRestaurant();
+    const b = await createTestRestaurant();
+    await withRole("authenticated", b.adminId, async (conn) => {
+      return conn`UPDATE menu_items SET is_active = false WHERE id = ${b.menuItemId}::uuid`;
+    });
+
+    const visibleToA = await withRole("authenticated", a.adminId, async (conn) => {
+      return conn`SELECT id FROM menu_items WHERE id = ${b.menuItemId}::uuid`;
     });
     expect(visibleToA).toHaveLength(0);
   });
