@@ -76,9 +76,29 @@ export function TableBoard({
     };
   }, [restaurantId, refetch]);
 
-  function handleClear(tableId: string) {
+  /**
+   * §Phase 6 audit P1-1: clear_table is a manual override that closes the
+   * table's open session unconditionally, even with non-terminal orders
+   * still attached — intentional (§18), but the UI gave no warning about
+   * that consequence, unlike every other destructive action here (delete
+   * table/category/item/staff, revoke QR all confirm). Closing a session
+   * with active orders still on it makes those orders drop out of this
+   * board's active-order count (listTableBoard only reads the currently
+   * OPEN session's orders) even though they remain fully live and
+   * actionable on the separate Orders board — easy to click by accident
+   * otherwise.
+   */
+  function handleClear(table: TableBoardRow) {
+    if (table.activeOrderCount > 0) {
+      const noun = table.activeOrderCount === 1 ? "order" : "orders";
+      const confirmed = window.confirm(
+        `Table "${table.label}" has ${table.activeOrderCount} active ${noun} that haven't been completed yet. Clear the table anyway? The order(s) will remain on the Orders board, but this table will stop showing them as active.`,
+      );
+      if (!confirmed) return;
+    }
+
     startTransition(async () => {
-      await clearTable(tableId);
+      await clearTable(table.tableId);
       await refetch();
     });
   }
@@ -136,7 +156,7 @@ export function TableBoard({
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={() => handleClear(table.tableId)}
+                  onClick={() => handleClear(table)}
                   className="rounded border border-current px-2 py-0.5 text-xs disabled:opacity-40"
                 >
                   Clear table
