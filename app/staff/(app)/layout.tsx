@@ -18,6 +18,7 @@ const HISTORY_NAV = [{ href: "/staff/history", label: "History" }];
 const ADMIN_NAV = [
   { href: "/staff/staff", label: "Staff" },
   { href: "/staff/settings", label: "Settings" },
+  { href: "/staff/audit", label: "Audit Log" },
 ];
 
 /**
