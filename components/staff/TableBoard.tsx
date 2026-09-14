@@ -14,6 +14,7 @@ import {
   type TableQrView,
 } from "@/app/actions/tablesAdmin";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { startPollFallback } from "@/lib/realtime/pollFallback";
 import type { TableStatus } from "@/lib/business/tableStatus";
 import type { StaffRole } from "@/lib/business/orderStateMachine";
 import { DownloadSvgButton } from "@/components/staff/DownloadSvgButton";
@@ -51,14 +52,45 @@ export function TableBoard({
   const [managingTableId, setManagingTableId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [connectionState, setConnectionState] = useState<"connected" | "reconnecting">("connected");
+
+  // Guards refetch() against setting state after unmount — refetch can be
+  // triggered by a realtime event, the poll fallback, or a manual action
+  // handler (handleClear, NewTableForm, TableManagePanel), any of which
+  // could still be in flight when the staff member navigates away.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const refetch = useCallback(async () => {
     const result = await listTableBoard();
+    if (!mountedRef.current) return;
     if (result.ok) setTables(result.data);
   }, []);
 
+  /**
+   * §16 realtime pattern (same as OrdersBoard/OrderTracker): postgres_changes
+   * on orders + table_sessions, RLS-scoped by restaurant_id, treated purely
+   * as an invalidation signal — table status/active-order-count is always
+   * re-derived server-side by listTableBoard, never computed here, so a
+   * missed/duplicate/out-of-order event is harmless. A watchdog
+   * (lib/realtime/pollFallback.ts) starts a 15s poll only while the channel
+   * is actually disconnected, and — since a restaurant tablet may stay on
+   * this screen for a long shift — an explicit refetch also fires the
+   * moment the channel reconnects, so a change that landed during the drop
+   * surfaces immediately instead of waiting for the next poll tick or the
+   * next live event.
+   */
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
+    let wasConnected = true; // initial data is fresh from the server render — first SUBSCRIBED isn't a "reconnect"
+
+    const fallback = startPollFallback({ onPoll: () => void refetch() });
+
     const channel = supabase
       .channel(`staff-tables-${restaurantId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurantId}` }, () =>
@@ -69,9 +101,16 @@ export function TableBoard({
         { event: "*", schema: "public", table: "table_sessions", filter: `restaurant_id=eq.${restaurantId}` },
         () => void refetch(),
       )
-      .subscribe();
+      .subscribe((status) => {
+        const isConnected = status === "SUBSCRIBED";
+        fallback.setConnected(isConnected);
+        setConnectionState(isConnected ? "connected" : "reconnecting");
+        if (isConnected && !wasConnected) void refetch();
+        wasConnected = isConnected;
+      });
 
     return () => {
+      fallback.stop();
       supabase.removeChannel(channel);
     };
   }, [restaurantId, refetch]);
@@ -107,8 +146,13 @@ export function TableBoard({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-semibold">Tables</h1>
+        {connectionState === "reconnecting" ? (
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+            Reconnecting… showing last known state, refreshing every 15s
+          </span>
+        ) : null}
         {isAdmin ? (
           <button
             type="button"
