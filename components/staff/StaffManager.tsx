@@ -9,13 +9,23 @@ import {
   type StaffMemberView,
 } from "@/app/actions/staffAdmin";
 import type { StaffRole } from "@/lib/business/orderStateMachine";
+import type { AssignableStaffRole } from "@/lib/validation/staff";
 
-const ROLE_OPTIONS: { value: StaffRole; label: string }[] = [
+/**
+ * Assignable roles only — manager/kitchen have no transition rights in
+ * lib/business/orderStateMachine.ts, so offering them here would let an
+ * admin hand someone order-management UI that silently fails on every
+ * click. Typed against AssignableStaffRole (lib/validation/staff.ts) so
+ * this list and the server-side schema can't drift apart unnoticed.
+ */
+const ASSIGNABLE_ROLE_OPTIONS: { value: AssignableStaffRole; label: string }[] = [
   { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
   { value: "staff", label: "Staff" },
-  { value: "kitchen", label: "Kitchen" },
 ];
+
+function isAssignableRole(role: StaffRole): role is AssignableStaffRole {
+  return ASSIGNABLE_ROLE_OPTIONS.some((opt) => opt.value === role);
+}
 
 const ROLE_LABEL: Record<StaffRole, string> = {
   admin: "Admin",
@@ -105,7 +115,7 @@ export function StaffManager({ initialMembers }: { initialMembers: StaffMemberVi
 
 function AddStaffForm({ onAdded }: { onAdded: (temporaryPassword: string | null, email: string) => void }) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<StaffRole>("staff");
+  const [role, setRole] = useState<AssignableStaffRole>("staff");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -138,8 +148,8 @@ function AddStaffForm({ onAdded }: { onAdded: (temporaryPassword: string | null,
       </div>
       <div className="w-40">
         <label className="text-xs text-[var(--color-charcoal-muted)]">Role</label>
-        <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)} className={inputClass}>
-          {ROLE_OPTIONS.map((opt) => (
+        <select value={role} onChange={(e) => setRole(e.target.value as AssignableStaffRole)} className={inputClass}>
+          {ASSIGNABLE_ROLE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -200,8 +210,23 @@ function StaffRow({ member, onChanged }: { member: StaffMemberView; onChanged: (
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // member.role may already be "manager"/"kitchen" (assigned before this
+  // restriction, or written directly at the DB layer) — never drop it
+  // from the row's own options, so the select keeps showing their actual
+  // current role instead of appearing blank, without making it
+  // re-assignable to anyone else.
+  const rowRoleOptions = ASSIGNABLE_ROLE_OPTIONS.some((opt) => opt.value === member.role)
+    ? ASSIGNABLE_ROLE_OPTIONS
+    : [{ value: member.role, label: ROLE_LABEL[member.role] }, ...ASSIGNABLE_ROLE_OPTIONS];
+
   function handleRoleChange(nextRole: StaffRole) {
     if (nextRole === member.role) return;
+    // Only reachable in practice if member.role is itself unassignable
+    // (manager/kitchen) and its own stub option gets re-selected, which
+    // the equality check above already caught — this is a type-narrowing
+    // guard, not a real runtime path, since ASSIGNABLE_ROLE_OPTIONS is the
+    // only source of *other* options in rowRoleOptions.
+    if (!isAssignableRole(nextRole)) return;
     const warning =
       member.role === "admin" && nextRole !== "admin"
         ? `Change ${member.email}${member.isSelf ? " (you)" : ""} from Admin to ${ROLE_LABEL[nextRole]}? ${
@@ -255,7 +280,7 @@ function StaffRow({ member, onChanged }: { member: StaffMemberView; onChanged: (
           onChange={(e) => handleRoleChange(e.target.value as StaffRole)}
           className="rounded-md border border-[var(--color-border)] bg-[var(--color-ivory)] px-2 py-1 text-xs focus:border-[var(--color-bronze)] focus:outline-none disabled:opacity-40"
         >
-          {ROLE_OPTIONS.map((opt) => (
+          {rowRoleOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

@@ -9,8 +9,8 @@ describe("addStaffMemberInputSchema", () => {
     expect(result).toEqual({ email: "new.hire@example.com", role: "staff" });
   });
 
-  it("accepts every role in the existing enum", () => {
-    for (const role of ["admin", "manager", "staff", "kitchen"]) {
+  it("accepts every assignable role", () => {
+    for (const role of ["admin", "staff"]) {
       expect(addStaffMemberInputSchema.safeParse({ email: "a@b.com", role }).success).toBe(true);
     }
   });
@@ -24,6 +24,11 @@ describe("addStaffMemberInputSchema", () => {
     expect(addStaffMemberInputSchema.safeParse({ email: "a@b.com", role: "owner" }).success).toBe(false);
   });
 
+  it("rejects manager/kitchen — reserved roles with no defined order-transition rights yet (§15)", () => {
+    expect(addStaffMemberInputSchema.safeParse({ email: "a@b.com", role: "manager" }).success).toBe(false);
+    expect(addStaffMemberInputSchema.safeParse({ email: "a@b.com", role: "kitchen" }).success).toBe(false);
+  });
+
   it("rejects an absurdly long email", () => {
     const longEmail = "a".repeat(250) + "@example.com";
     expect(addStaffMemberInputSchema.safeParse({ email: longEmail, role: "staff" }).success).toBe(false);
@@ -32,15 +37,20 @@ describe("addStaffMemberInputSchema", () => {
 
 describe("updateStaffRoleInputSchema", () => {
   it("accepts a valid membershipId and role", () => {
-    expect(updateStaffRoleInputSchema.safeParse({ membershipId: id, role: "manager" }).success).toBe(true);
+    expect(updateStaffRoleInputSchema.safeParse({ membershipId: id, role: "staff" }).success).toBe(true);
   });
 
   it("rejects a non-uuid membershipId", () => {
-    expect(updateStaffRoleInputSchema.safeParse({ membershipId: "not-a-uuid", role: "manager" }).success).toBe(false);
+    expect(updateStaffRoleInputSchema.safeParse({ membershipId: "not-a-uuid", role: "staff" }).success).toBe(false);
   });
 
   it("rejects an invalid role", () => {
     expect(updateStaffRoleInputSchema.safeParse({ membershipId: id, role: "superadmin" }).success).toBe(false);
+  });
+
+  it("rejects manager/kitchen — reserved roles with no defined order-transition rights yet (§15)", () => {
+    expect(updateStaffRoleInputSchema.safeParse({ membershipId: id, role: "manager" }).success).toBe(false);
+    expect(updateStaffRoleInputSchema.safeParse({ membershipId: id, role: "kitchen" }).success).toBe(false);
   });
 });
 
