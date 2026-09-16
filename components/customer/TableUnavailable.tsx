@@ -17,9 +17,9 @@ const MESSAGES: Record<string, { title: string; body: string }> = {
 export function TableUnavailable({ reason }: { reason?: string }) {
   const { title, body } = MESSAGES[reason ?? "default"] ?? MESSAGES.default!;
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="font-display text-2xl font-semibold">{title}</h1>
-      <p className="max-w-sm text-[var(--color-charcoal-muted)]">{body}</p>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--color-canvas)] px-6 text-center">
+      <h1 className="text-2xl font-semibold text-[var(--color-ink)]">{title}</h1>
+      <p className="max-w-sm text-[var(--color-ink-muted)]">{body}</p>
     </main>
   );
 }

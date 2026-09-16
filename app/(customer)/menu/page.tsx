@@ -32,6 +32,7 @@ export default async function MenuPage({
         <MenuBrowser
           restaurantName={context.restaurantName}
           tableLabel={context.tableLabel}
+          tableId={context.tableId}
           currency={context.currency}
           orderingEnabled={context.orderingEnabled}
           categories={menuResult.data}

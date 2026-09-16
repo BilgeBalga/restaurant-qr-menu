@@ -20,6 +20,14 @@ export interface CartLine {
   quantity: number;
   options: CartOptionSelection[];
   lineNote?: string;
+  /**
+   * Display-only, added Stage 2 for the redesigned cart's item thumbnails
+   * — never read by create_order or any pricing/idempotency logic, so a
+   * cart persisted before this field existed still round-trips fine
+   * (reads back as undefined, MenuItemImage's existing monogram fallback
+   * handles it exactly like a menu item with no photo).
+   */
+  imageUrl?: string | null;
 }
 
 export interface Cart {

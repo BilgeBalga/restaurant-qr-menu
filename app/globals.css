@@ -18,6 +18,64 @@
 
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * Table-Side redesign tokens (Stage 1 — customer only).
+   * Deliberately a NEW, separately-named set, additive alongside the
+   * tokens above — nothing above is renamed or removed, since staff
+   * screens (not part of this redesign stage) still consume them
+   * directly by name. Once every screen has migrated to this palette,
+   * a later stage can retire the ivory/bronze set; until then both
+   * co-exist on purpose. Palette per the Stitch design brief: warm
+   * off-white canvas, terracotta reserved strictly for conversion
+   * actions/active states, deep charcoal text, emerald/amber/slate
+   * semantic accents for success/pending/inactive states.
+   */
+  --color-canvas: #f9fafb;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f3f4f6;
+  --color-hairline: #e5e7eb;
+
+  --color-primary: #e24a2d;
+  --color-primary-strong: #c43d22;
+  --color-on-primary: #ffffff;
+
+  --color-ink: #111827;
+  --color-ink-muted: #6b7280;
+
+  --color-success: #059669;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
+
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-muted: #6b7280;
+  --color-muted-bg: #f3f4f6;
+  --color-muted-border: #e5e7eb;
+}
+
+/*
+ * Stage 2 — customer-only Inter typeface. `--font-inter` itself is
+ * defined by next/font's generated class applied at the customer
+ * layout root (app/(customer)/layout.tsx), not at :root — unlike
+ * --font-fraunces/--font-public-sans above (set on <html> in the root
+ * layout), it's genuinely unavailable at :root by design, since loading
+ * Inter there would pull it into every staff/platform page too. A
+ * regular `@theme` entry resolves its var() chain once at :root, so
+ * with `--font-inter` absent there it would compute as invalid and
+ * that invalid value would inherit everywhere, breaking the very
+ * customer pages this is for. `@theme inline` avoids that: Tailwind
+ * inlines the var(--font-inter) reference directly into the generated
+ * `font-customer-sans` utility instead of pre-resolving it at :root, so
+ * it's evaluated locally, wherever that utility class is applied —
+ * which is exactly the customer layout div that also defines
+ * --font-inter. Staff/platform screens never apply this utility, so
+ * they keep inheriting the body's `--font-sans` as before.
+ */
+@theme inline {
+  --font-customer-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -32,5 +90,22 @@
   h3,
   h4 {
     font-family: var(--font-display);
+  }
+
+  /*
+   * A direct declaration on h1-h4 always beats inheritance, so the rule
+   * above would otherwise win inside the customer layout too, even
+   * though its wrapper div's own font-family is --font-customer-sans
+   * (Inter). Re-declaring font-family here, scoped to descendants of
+   * that wrapper, is what actually keeps Fraunces out of customer
+   * headings — a plain `font-customer-sans` class on the wrapper alone
+   * cannot reach heading descendants, since CSS class membership isn't
+   * inherited the way property values are.
+   */
+  .font-customer-sans h1,
+  .font-customer-sans h2,
+  .font-customer-sans h3,
+  .font-customer-sans h4 {
+    font-family: var(--font-customer-sans);
   }
 }

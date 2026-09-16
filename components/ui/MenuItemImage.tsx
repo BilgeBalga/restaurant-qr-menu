@@ -18,19 +18,24 @@ export function MenuItemImage({
   imageUrl,
   className = "",
   monogramClassName = "text-lg",
+  fallbackBgClassName = "bg-[var(--color-ivory)]",
+  fallbackTextClassName = "text-[var(--color-bronze)]",
 }: {
   name: string;
   imageUrl: string | null;
   className?: string;
   monogramClassName?: string;
+  /** Overridable so callers on a different visual system (e.g. the redesigned MenuBrowser) aren't stuck with the legacy palette — defaults preserve every existing call site's exact appearance. */
+  fallbackBgClassName?: string;
+  fallbackTextClassName?: string;
 }) {
   return (
-    <div className={`overflow-hidden bg-[var(--color-ivory)] ${className}`}>
+    <div className={`overflow-hidden ${fallbackBgClassName} ${className}`}>
       {imageUrl ? (
         <img src={imageUrl} alt={name} loading="lazy" className="h-full w-full object-cover" />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
-          <span className={`font-display font-semibold text-[var(--color-bronze)] ${monogramClassName}`} aria-hidden="true">
+          <span className={`font-display font-semibold ${fallbackTextClassName} ${monogramClassName}`} aria-hidden="true">
             {name.trim().charAt(0).toUpperCase() || "?"}
           </span>
         </div>

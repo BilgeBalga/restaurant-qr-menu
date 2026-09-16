@@ -30,7 +30,7 @@ export default async function MenuItemPage({
 
   return (
     <CartProvider tableId={context.tableId}>
-      <ItemDetail item={itemResult.data} currency={context.currency} />
+      <ItemDetail item={itemResult.data} currency={context.currency} tableId={context.tableId} />
     </CartProvider>
   );
 }

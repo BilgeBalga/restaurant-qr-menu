@@ -8,11 +8,11 @@
  */
 export default function CustomerLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-ivory)]">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-canvas)]">
       <div
         role="status"
         aria-label="Loading"
-        className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-bronze)]"
+        className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-hairline)] border-t-[var(--color-primary)]"
       />
     </div>
   );
