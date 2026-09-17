@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface': '#f8f9ff', 'on-tertiary-container': '#f5fff7', 'secondary': '#575e70', 'on-secondary-container': '#5c6274', 'secondary-fixed-dim': '#c0c6db', 'tertiary': '#006948', 'tertiary-fixed': '#85f8c4', 'inverse-on-surface': '#eaf1ff', 'on-tertiary-fixed-variant': '#005137', 'inverse-primary': '#ffb4a5', 'on-primary-container': '#fffbff', 'secondary-container': '#d9dff5', 'outline': '#8e706a', 'tertiary-fixed-dim': '#68dba9', 'on-secondary-fixed': '#141b2b', 'surface-container-high': '#dee9fc', 'on-primary-fixed': '#3e0500', 'on-secondary': '#ffffff', 'surface-container': '#e6eeff', 'error-container': '#ffdad6', 'on-secondary-fixed-variant': '#404758', 'surface-container-lowest': '#ffffff', 'primary-fixed-dim': '#ffb4a5', 'on-primary': '#ffffff', 'surface-bright': '#f8f9ff', 'error': '#ba1a1a', 'on-error-container': '#93000a', 'primary': '#b0260c', 'primary-fixed': '#ffdad3', 'secondary-fixed': '#dce2f7', 'primary-container': '#d33f24', 'on-surface-variant': '#5a413b', 'surface-tint': '#b3290f', 'on-tertiary-fixed': '#002114', 'surface-dim': '#d0dbed', 'background': '#f8f9ff', 'on-primary-fixed-variant': '#8d1500', 'on-background': '#121c2a', 'on-error': '#ffffff', 'outline-variant': '#e3beb7', 'on-tertiary': '#ffffff', 'tertiary-container': '#00855d', 'surface-variant': '#d9e3f6', 'on-surface': '#121c2a', 'surface-container-low': '#eff4ff', 'inverse-surface': '#27313f', 'surface-container-highest': '#d9e3f6' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'space-lg': '1rem', 'space-xs': '0.25rem', 'space-sm': '0.5rem', 'gutter': '1rem', 'gutter-tablet': '1.5rem', 'space-md': '0.75rem', 'space-xl': '1.5rem', 'space-2xl': '2rem', 'margin': '1rem', 'margin-desktop': '3rem', 'margin-tablet': '2rem' }, fontFamily: { 'body-sm': ['Inter'], 'body-lg': ['Inter'], 'label-md': ['Inter'], 'label-lg': ['Inter'], 'headline-md': ['Inter'], 'headline-lg': ['Inter'], 'display-mobile': ['Inter'], 'label-sm': ['Inter'], 'display': ['Inter'], 'body-md': ['Inter'], 'headline-sm': ['Inter'], 'currency-display': ['Inter'] }, fontSize: { 'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '600' }], 'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.015em', fontWeight: '600' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '600' }], 'display-mobile': ['30px', { lineHeight: '36px', letterSpacing: '-0.025em', fontWeight: '700' }], 'label-sm': ['11px', { lineHeight: '14px', letterSpacing: '0.03em', fontWeight: '500' }], 'display': ['36px', { lineHeight: '44px', letterSpacing: '-0.03em', fontWeight: '700' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-sm': ['18px', { lineHeight: '24px', letterSpacing: '-0.01em', fontWeight: '600' }], 'currency-display': ['32px', { lineHeight: '38px', letterSpacing: '-0.02em', fontWeight: '700' }] } } } };</script></head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between max-w-[480px] mx-auto w-full"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="font-headline-sm text-headline-sm leading-none font-bold">M</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm font-semibold text-on-surface leading-tight">Lara Social</span><span class="font-label-sm text-label-sm text-secondary">• Kadıköy</span></div><div class="flex items-center gap-space-xs mt-0.5"><span class="font-label-sm text-label-sm text-on-surface-variant">Hesap &amp; Böl</span></div></div></div><div class="flex items-center gap-space-sm"><div class="inline-flex items-center px-space-sm py-0.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest mr-1.5 animate-pulse"></span>Masa 12</div><button aria-label="Garson Çağır" class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container text-primary transition-all active:scale-[0.96]" type="button"><span class="material-symbols-outlined text-[22px]">notifications_active</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full max-w-[480px] mx-auto px-margin pt-16 pb-24 bg-surface"><div class="flex flex-col w-full pb-6 space-y-4">
+<!-- Status & Table Overview Card -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-label-md text-label-md text-secondary">Açık Hesap</span>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-medium">Masa 12 • 4 Misafir</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Masa Genel Toplamı</span>
+<div class="flex items-baseline gap-1.5 mt-0.5">
+<span class="font-display-mobile text-display-mobile text-on-background font-bold">₺2.233</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-medium">,00</span>
+</div>
+</div>
+<!-- Payment Progress Bar -->
+<div class="space-y-1.5 pt-1">
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full bg-tertiary transition-all duration-500" style="width: 0%;"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-tertiary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+          ₺0,00 ödendi
+        </span>
+<span class="text-secondary font-medium">₺2.233,00 kalan</span>
+</div>
+</div>
+</section>
+<!-- Collapsible Itemized Receipt -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<button class="w-full p-space-lg flex items-center justify-between text-left active:bg-surface-container-low transition-colors" id="toggle-receipt-btn" type="button">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Sipariş Detayları</span>
+<span class="font-label-sm text-label-sm text-secondary">4 Kalem Ürün • %10 Servis</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-secondary">
+<span class="font-label-sm text-label-sm" id="receipt-toggle-text">Göster</span>
+<span class="material-symbols-outlined text-[20px] transition-transform duration-300" id="receipt-chevron">expand_more</span>
+</div>
+</button>
+<div class="hidden px-space-lg pb-space-lg space-y-3 pt-1" id="receipt-drawer">
+<div class="space-y-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary px-1.5 py-0.5 rounded bg-primary-fixed">2x</span>
+<span class="font-body-md text-body-md text-on-surface">Trüflü Burger</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-medium">₺1.070</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary px-1.5 py-0.5 rounded bg-primary-fixed">1x</span>
+<span class="font-body-md text-body-md text-on-surface">Margherita Pizza</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-medium">₺420</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary px-1.5 py-0.5 rounded bg-primary-fixed">2x</span>
+<span class="font-body-md text-body-md text-on-surface">Limonata</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-medium">₺320</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary px-1.5 py-0.5 rounded bg-primary-fixed">1x</span>
+<span class="font-body-md text-body-md text-on-surface">San Sebastian Cheesecake</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-medium">₺220</span>
+</div>
+</div>
+<div class="pt-3 space-y-1.5 bg-surface-container-low p-3 rounded-lg">
+<div class="flex items-center justify-between font-body-sm text-body-sm text-secondary">
+<span>Ara Toplam</span>
+<span>₺2.030,00</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-secondary">
+<span>Servis Bedeli (%10)</span>
+<span>₺203,00</span>
+</div>
+<div class="flex items-center justify-between font-headline-sm text-headline-sm text-on-surface font-semibold pt-1">
+<span>Genel Toplam</span>
+<span class="text-primary">₺2.233,00</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Split Selector Segment Tabs -->
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Hesabı Nasıl Ödemek İstersiniz?</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">tune</span>
+</div>
+<!-- Method Tabs -->
+<div class="grid grid-cols-3 gap-1.5 p-1 bg-surface-container rounded-xl">
+<button class="py-2.5 px-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md shadow-sm transition-all text-center" type="button">
+        Eşit Böl
+      </button>
+<button class="py-2.5 px-2 rounded-lg text-secondary hover:text-on-surface font-label-md text-label-md transition-all text-center" type="button">
+        Ürün Seç
+      </button>
+<button class="py-2.5 px-2 rounded-lg text-secondary hover:text-on-surface font-label-md text-label-md transition-all text-center" type="button">
+        Tutar Gir
+      </button>
+</div>
+<!-- Split Carousel Cards -->
+<div class="grid grid-cols-3 gap-2">
+<!-- 2 Kişi -->
+<button class="split-btn p-3 rounded-xl bg-surface-container-lowest text-left transition-all active:scale-[0.98] shadow-sm flex flex-col justify-between min-h-[88px]" onclick="selectSplit(2, 1116.50)" type="button">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-secondary">2 Kişi</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">group</span>
+</div>
+<div class="mt-2">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">₺1.116</span>
+<span class="font-label-sm text-label-sm text-secondary">,50</span>
+</div>
+</button>
+<!-- 3 Kişi (Default Active) -->
+<button class="split-btn p-3 rounded-xl bg-primary text-on-primary text-left transition-all active:scale-[0.98] shadow-md flex flex-col justify-between min-h-[88px]" onclick="selectSplit(3, 744.33)" type="button">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-primary font-semibold">3 Kişi</span>
+<span class="material-symbols-outlined text-[16px] text-on-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="mt-2">
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary">₺744</span>
+<span class="font-label-sm text-label-sm text-primary-fixed">,33</span>
+</div>
+</button>
+<!-- 4 Kişi -->
+<button class="split-btn p-3 rounded-xl bg-surface-container-lowest text-left transition-all active:scale-[0.98] shadow-sm flex flex-col justify-between min-h-[88px]" onclick="selectSplit(4, 558.25)" type="button">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-secondary">4 Kişi</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">groups</span>
+</div>
+<div class="mt-2">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">₺558</span>
+<span class="font-label-sm text-label-sm text-secondary">,25</span>
+</div>
+</button>
+</div>
+<!-- Active Split Highlight & Peer Note -->
+<div class="p-space-lg rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-2.5">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary">Seçilen Payınız</span>
+<p class="font-headline-md text-headline-md text-on-surface font-bold mt-0.5">3 Kişilik Eşit Bölüm</p>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-secondary">Ana Pay Tutarı</span>
+<p class="font-headline-md text-headline-md text-primary font-bold mt-0.5" id="split-display-amt">₺744,33</p>
+</div>
+</div>
+<div class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-lowest text-secondary">
+<span class="material-symbols-outlined text-[18px] text-tertiary shrink-0">qr_code_scanner</span>
+<span class="font-body-sm text-body-sm leading-snug">Arkadaşlarınız masadaki QR'ı telefonlarıyla okutarak kalan paylarını ödeyebilir.</span>
+</div>
+</div>
+</section>
+<!-- Tip Section -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[16px]">volunteer_activism</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Servis Ekibine Bahşiş</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold" id="tip-added-indicator">+₺74,00</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary">Mutfak ve servis ekibimizin emeğini takdir etmek isterseniz dilediğiniz oranı ekleyebilirsiniz.</p>
+<!-- Tip Options -->
+<div class="grid grid-cols-5 gap-1.5">
+<button class="tip-btn py-2 px-1 rounded-lg bg-surface-container text-center transition-all active:scale-95" onclick="selectTip(0, 0)" type="button">
+<span class="block font-label-md text-label-md text-secondary">%0</span>
+<span class="block font-label-sm text-label-sm text-secondary mt-0.5">-</span>
+</button>
+<button class="tip-btn py-2 px-1 rounded-lg bg-surface-container text-center transition-all active:scale-95" onclick="selectTip(5, 37)" type="button">
+<span class="block font-label-md text-label-md text-on-surface">%5</span>
+<span class="block font-label-sm text-label-sm text-secondary mt-0.5">₺37</span>
+</button>
+<!-- %10 Selected Default -->
+<button class="tip-btn active-tip py-2 px-1 rounded-lg bg-primary text-on-primary text-center transition-all active:scale-95 shadow-sm" onclick="selectTip(10, 74)" type="button">
+<span class="block font-label-md text-label-md text-on-primary font-bold">%10</span>
+<span class="block font-label-sm text-label-sm text-primary-fixed mt-0.5">₺74</span>
+</button>
+<button class="tip-btn py-2 px-1 rounded-lg bg-surface-container text-center transition-all active:scale-95" onclick="selectTip(15, 111)" type="button">
+<span class="block font-label-md text-label-md text-on-surface">%15</span>
+<span class="block font-label-sm text-label-sm text-secondary mt-0.5">₺111</span>
+</button>
+<button class="tip-btn py-2 px-1 rounded-lg bg-surface-container text-center transition-all active:scale-95" onclick="customTipPrompt()" type="button">
+<span class="block font-label-md text-label-md text-secondary">Özel</span>
+<span class="block font-label-sm text-label-sm text-secondary mt-0.5">₺...</span>
+</button>
+</div>
+</section>
+<!-- Payment Method Quick Selector -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm space-y-3">
+<span class="font-headline-sm text-headline-sm text-on-surface">Ödeme Yöntemi</span>
+<div class="grid grid-cols-2 gap-2">
+<!-- Apple Pay / Instant -->
+<button class="p-3 rounded-xl bg-surface-container-low text-left flex flex-col justify-between gap-3 active:scale-[0.98] transition-transform" type="button">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-on-surface">contactless</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Hızlı Pay</span>
+</div>
+<span class="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest"></span>
+</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Apple Pay / Google Pay</span>
+</button>
+<!-- Cards / Troy -->
+<button class="p-3 rounded-xl bg-surface-container text-left flex flex-col justify-between gap-3 active:scale-[0.98] transition-transform" type="button">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-secondary">credit_card</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Kart ile</span>
+</div>
+<span class="w-3.5 h-3.5 rounded-full bg-secondary-container"></span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Troy, Visa, Master</span>
+</button>
+</div>
+<!-- Security Micro-Badge -->
+<div class="flex items-center justify-center gap-1.5 pt-1 text-secondary">
+<span class="material-symbols-outlined text-[15px] text-tertiary">lock</span>
+<span class="font-label-sm text-label-sm">256-Bit SSL &amp; BDDK / PCI-DSS Onaylı Ödeme</span>
+</div>
+</section>
+<!-- Sticky Bottom Checkout Bar (Fixed over safe-area) -->
+<div class="fixed bottom-16 inset-x-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_-8px_24px_-4px_rgba(18,28,42,0.08)]">
+<div class="max-w-[480px] mx-auto px-margin py-3 space-y-2">
+<button class="w-full h-[52px] rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-between px-5 active:scale-[0.98] shadow-md transition-all" onclick="handlePayAction()" type="button">
+<div class="flex flex-col text-left">
+<span class="font-label-sm text-label-sm text-primary-fixed leading-none">Toplam Tutarınız</span>
+<span class="font-headline-md text-headline-md font-bold text-on-primary mt-0.5" id="final-pay-button-amount">₺818,33</span>
+</div>
+<div class="flex items-center gap-1 font-semibold">
+<span>Payımı Öde</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</div>
+</button>
+<p class="font-label-sm text-label-sm text-secondary text-center">
+        Ödeme sonrası anında dijital e-fiş ve Google Review puanlaması açılır.
+      </p>
+</div>
+</div>
+</div>
+<script>
+  let currentSplit = 744.33;
+  let currentTip = 74.00;
+
+  function updateTotals() {
+    const total = currentSplit + currentTip;
+    const formatted = '₺' + total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('final-pay-button-amount').innerText = formatted;
+  }
+
+  function selectSplit(persons, amount) {
+    currentSplit = amount;
+    document.getElementById('split-display-amt').innerText = '₺' + amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    // UI toggle classes
+    const buttons = document.querySelectorAll('.split-btn');
+    buttons.forEach(btn => {
+      btn.className = 'split-btn p-3 rounded-xl bg-surface-container-lowest text-left transition-all active:scale-[0.98] shadow-sm flex flex-col justify-between min-h-[88px]';
+      const label = btn.querySelector('.font-label-md');
+      if (label) label.className = 'font-label-md text-label-md text-secondary';
+      const price = btn.querySelector('.font-headline-sm');
+      if (price) price.className = 'font-headline-sm text-headline-sm font-bold text-on-surface';
+    });
+
+    event.currentTarget.className = 'split-btn p-3 rounded-xl bg-primary text-on-primary text-left transition-all active:scale-[0.98] shadow-md flex flex-col justify-between min-h-[88px]';
+    const activeLabel = event.currentTarget.querySelector('.font-label-md');
+    if (activeLabel) activeLabel.className = 'font-label-md text-label-md text-on-primary font-semibold';
+    const activePrice = event.currentTarget.querySelector('.font-headline-sm');
+    if (activePrice) activePrice.className = 'font-headline-sm text-headline-sm font-bold text-on-primary';
+
+    updateTotals();
+  }
+
+  function selectTip(percent, tipVal) {
+    currentTip = tipVal;
+    const indicator = document.getElementById('tip-added-indicator');
+    if (tipVal > 0) {
+      indicator.innerText = '+₺' + tipVal.toFixed(2).replace('.', ',');
+      indicator.className = 'font-label-sm text-label-sm text-tertiary font-semibold';
+    } else {
+      indicator.innerText = '₺0,00';
+      indicator.className = 'font-label-sm text-label-sm text-secondary font-medium';
+    }
+
+    const tipBtns = document.querySelectorAll('.tip-btn');
+    tipBtns.forEach(btn => {
+      btn.className = 'tip-btn py-2 px-1 rounded-lg bg-surface-container text-center transition-all active:scale-95';
+      const txt = btn.querySelector('.font-label-md');
+      if (txt) txt.className = 'block font-label-md text-label-md text-on-surface';
+    });
+
+    event.currentTarget.className = 'tip-btn active-tip py-2 px-1 rounded-lg bg-primary text-on-primary text-center transition-all active:scale-95 shadow-sm';
+    const curTxt = event.currentTarget.querySelector('.font-label-md');
+    if (curTxt) curTxt.className = 'block font-label-md text-label-md text-on-primary font-bold';
+
+    updateTotals();
+  }
+
+  function customTipPrompt() {
+    const val = prompt('Bahşiş miktarını TL olarak giriniz:', '50');
+    if (val && !isNaN(val)) {
+      selectTip(-1, parseFloat(val));
+    }
+  }
+
+  // Toggle order details drawer
+  document.getElementById('toggle-receipt-btn').addEventListener('click', function () {
+    const drawer = document.getElementById('receipt-drawer');
+    const chevron = document.getElementById('receipt-chevron');
+    const toggleText = document.getElementById('receipt-toggle-text');
+    
+    if (drawer.classList.contains('hidden')) {
+      drawer.classList.remove('hidden');
+      chevron.classList.add('rotate-180');
+      toggleText.innerText = 'Gizle';
+    } else {
+      drawer.classList.add('hidden');
+      chevron.classList.remove('rotate-180');
+      toggleText.innerText = 'Göster';
+    }
+  });
+
+  function handlePayAction() {
+    const btn = document.getElementById('final-pay-button-amount').parentElement.parentElement;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin mx-auto text-on-primary text-[24px]">progress_activity</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="flex items-center justify-center gap-2 mx-auto font-semibold"><span class="material-symbols-outlined text-[22px]">check</span>Ödeme Tamamlandı!</span>';
+      btn.classList.remove('bg-primary');
+      btn.classList.add('bg-tertiary');
+    }, 1200);
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-8px_24px_-4px_rgba(17,24,39,0.06)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 max-w-[480px] mx-auto px-space-xs"><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="menu" href="#"><span class="material-symbols-outlined text-[22px]">restaurant_menu</span><span class="font-label-sm text-label-sm mt-0.5">Menü</span></a><a class="relative flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="siparislerim" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-sm text-label-sm mt-0.5">Siparişler</span><span class="absolute top-1.5 right-3 px-1 rounded-full bg-tertiary text-on-tertiary font-label-sm text-[10px] leading-3">2</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="hesap-bol" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-sm text-label-sm mt-0.5">Hesap &amp; Böl</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="garson" href="#"><span class="material-symbols-outlined text-[22px]">room_service</span><span class="font-label-sm text-label-sm mt-0.5">Garson</span></a></div></nav></body></html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f8f9ff;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'surface': '#f8f9ff', 'on-tertiary-container': '#f5fff7', 'secondary': '#575e70', 'on-secondary-container': '#5c6274', 'secondary-fixed-dim': '#c0c6db', 'tertiary': '#006948', 'tertiary-fixed': '#85f8c4', 'inverse-on-surface': '#eaf1ff', 'on-tertiary-fixed-variant': '#005137', 'inverse-primary': '#ffb4a5', 'on-primary-container': '#fffbff', 'secondary-container': '#d9dff5', 'outline': '#8e706a', 'tertiary-fixed-dim': '#68dba9', 'on-secondary-fixed': '#141b2b', 'surface-container-high': '#dee9fc', 'on-primary-fixed': '#3e0500', 'on-secondary': '#ffffff', 'surface-container': '#e6eeff', 'error-container': '#ffdad6', 'on-secondary-fixed-variant': '#404758', 'surface-container-lowest': '#ffffff', 'primary-fixed-dim': '#ffb4a5', 'on-primary': '#ffffff', 'surface-bright': '#f8f9ff', 'error': '#ba1a1a', 'on-error-container': '#93000a', 'primary': '#b0260c', 'primary-fixed': '#ffdad3', 'secondary-fixed': '#dce2f7', 'primary-container': '#d33f24', 'on-surface-variant': '#5a413b', 'surface-tint': '#b3290f', 'on-tertiary-fixed': '#002114', 'surface-dim': '#d0dbed', 'background': '#f8f9ff', 'on-primary-fixed-variant': '#8d1500', 'on-background': '#121c2a', 'on-error': '#ffffff', 'outline-variant': '#e3beb7', 'on-tertiary': '#ffffff', 'tertiary-container': '#00855d', 'surface-variant': '#d9e3f6', 'on-surface': '#121c2a', 'surface-container-low': '#eff4ff', 'inverse-surface': '#27313f', 'surface-container-highest': '#d9e3f6' }, borderRadius: { 'DEFAULT': '0.25rem', 'lg': '0.5rem', 'xl': '0.75rem', 'full': '9999px' }, spacing: { 'space-lg': '1rem', 'space-xs': '0.25rem', 'space-sm': '0.5rem', 'gutter': '1rem', 'gutter-tablet': '1.5rem', 'space-md': '0.75rem', 'space-xl': '1.5rem', 'space-2xl': '2rem', 'margin': '1rem', 'margin-desktop': '3rem', 'margin-tablet': '2rem' }, fontFamily: { 'body-sm': ['Inter'], 'body-lg': ['Inter'], 'label-md': ['Inter'], 'label-lg': ['Inter'], 'headline-md': ['Inter'], 'headline-lg': ['Inter'], 'display-mobile': ['Inter'], 'label-sm': ['Inter'], 'display': ['Inter'], 'body-md': ['Inter'], 'headline-sm': ['Inter'], 'currency-display': ['Inter'] }, fontSize: { 'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0.005em', fontWeight: '400' }], 'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '600' }], 'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.015em', fontWeight: '600' }], 'headline-lg': ['24px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '600' }], 'display-mobile': ['30px', { lineHeight: '36px', letterSpacing: '-0.025em', fontWeight: '700' }], 'label-sm': ['11px', { lineHeight: '14px', letterSpacing: '0.03em', fontWeight: '500' }], 'display': ['36px', { lineHeight: '44px', letterSpacing: '-0.03em', fontWeight: '700' }], 'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }], 'headline-sm': ['18px', { lineHeight: '24px', letterSpacing: '-0.01em', fontWeight: '600' }], 'currency-display': ['32px', { lineHeight: '38px', letterSpacing: '-0.02em', fontWeight: '700' }] } } } };</script></head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between max-w-[480px] mx-auto w-full"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="font-headline-sm text-headline-sm leading-none font-bold">M</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm font-semibold text-on-surface leading-tight">Lara Social</span><span class="font-label-sm text-label-sm text-secondary">• Kadıköy</span></div><div class="flex items-center gap-space-xs mt-0.5"><span class="font-label-sm text-label-sm text-on-surface-variant">Menü</span></div></div></div><div class="flex items-center gap-space-sm"><div class="inline-flex items-center px-space-sm py-0.5 rounded-full bg-primary-container text-on-primary font-label-md text-label-md shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest mr-1.5 animate-pulse"></span>Masa 12</div><button aria-label="Garson Çağır" class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-surface-container text-primary transition-all active:scale-[0.96]" type="button"><span class="material-symbols-outlined text-[22px]">notifications_active</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full max-w-[480px] mx-auto px-margin pt-16 pb-24 bg-surface"><div class="flex flex-col w-full pb-20">
+<!-- Table Welcome & Atmosphere Card -->
+<section class="w-full mb-space-lg">
+<div class="relative overflow-hidden rounded-2xl bg-surface-container-low p-space-lg shadow-sm">
+<div class="absolute -right-10 -bottom-10 w-36 h-36 rounded-full bg-primary-fixed/20 blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            Mutfak Açık &amp; Aktif
+          </span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">wifi_tethering</span>
+            Hızlı Dijital Masa
+          </span>
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface mt-1">Hoş Geldiniz</h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-snug">
+          Menüden dilediğiniz lezzeti seçip anında mutfağa iletebilir, garson çağırabilir ve hesabı masanızdan ödeyebilirsiniz.
+        </p>
+<div class="flex items-center gap-1.5 text-secondary mt-1 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-[16px]">bolt</span>
+<span>Uygulama indirmeye gerek yok • Anında mutfakta</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Search & Filter Controls -->
+<section class="w-full mb-space-lg flex flex-col gap-space-sm">
+<div class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-3.5 text-secondary text-[20px]">search</span>
+<input class="w-full h-12 pl-11 pr-10 rounded-xl bg-surface-container-lowest text-on-surface placeholder:text-secondary font-body-md text-body-md shadow-sm transition-all focus:outline-none focus:bg-surface-container-low" id="menu-search-input" placeholder="Ürün, malzeme veya içerik ara..." type="text"/>
+<button aria-label="Aramayı Temizle" class="hidden absolute right-3 text-secondary p-1" id="search-clear-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+</button>
+</div>
+<!-- Dietary Filter Chips (Horizontal Scrollable) -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5" id="filter-chips">
+<button class="filter-chip px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shrink-0 shadow-sm transition-transform active:scale-95 flex items-center gap-1" data-filter="all">
+<span>Tümü</span>
+</button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-sm transition-transform active:scale-95 flex items-center gap-1" data-filter="popular">
+<span class="material-symbols-outlined text-primary text-[14px]">local_fire_department</span>
+<span>Popüler</span>
+</button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-sm transition-transform active:scale-95 flex items-center gap-1" data-filter="chef">
+<span class="material-symbols-outlined text-tertiary text-[14px]">award_star</span>
+<span>Şefin Seçimi</span>
+</button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-sm transition-transform active:scale-95 flex items-center gap-1" data-filter="veg">
+<span class="material-symbols-outlined text-tertiary text-[14px]">eco</span>
+<span>Vejetaryen</span>
+</button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shrink-0 shadow-sm transition-transform active:scale-95 flex items-center gap-1" data-filter="gluten-free">
+<span class="material-symbols-outlined text-secondary text-[14px]">grain</span>
+<span>Glutensiz</span>
+</button>
+</div>
+</section>
+<!-- Sticky Categories Navigation -->
+<section class="sticky top-16 z-30 -mx-margin px-margin py-2 bg-surface/90 backdrop-blur-md mb-space-md shadow-[0_4px_12px_-4px_rgba(0,0,0,0.03)]">
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="category-pills">
+<a class="category-pill px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md shrink-0 shadow-sm flex items-center gap-1" href="#section-popular">
+<span>Çok Sevilenler</span>
+</a>
+<a class="category-pill px-3.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md shrink-0 transition-colors" href="#section-mains">
+<span>Burger &amp; Ana Yemek</span>
+</a>
+<a class="category-pill px-3.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md shrink-0 transition-colors" href="#section-pizza">
+<span>Taş Fırın Pizza</span>
+</a>
+<a class="category-pill px-3.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md shrink-0 transition-colors" href="#section-sweets">
+<span>Tatlılar &amp; Kahve</span>
+</a>
+<a class="category-pill px-3.5 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md shrink-0 transition-colors" href="#section-drinks">
+<span>Kokteyl &amp; İçecek</span>
+</a>
+</div>
+</section>
+<!-- Section 1: Çok Sevilenler / Popüler -->
+<section class="w-full mb-space-xl scroll-mt-28" id="section-popular">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Çok Sevilenler</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">3 Lezzet</span>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Item 1: Trüflü Burger -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm relative overflow-hidden">
+<div class="flex items-start gap-space-md">
+<div class="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Gourmet truffled beef burger with melted golden cheddar cheese flowing over edges, caramelized black truffle mayo, placed on a toasted shiny brioche bun, side of crispy seasoned rustic fries, moody Mediterranean warm restaurant lighting, shallow depth of field, appetizing food photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBghwFo1eB4YEQEueSsR2J79oIMRMoXGYBKAy9DUKIbkykGigBoVbQIzLP50f86KaYL8vDayKYq8Ze_sRhgC7C-G2jy1qZpuGWKfU6cv5BJYnCrI1lVuPmb2aTB0MJB97Lk-cThXvMSQ4rjxyUiKK40DkrIyH2YYSK0aQXTKI6gW7UTTyd71YQcdPIce19cI-WbTQEiaryTbvRB0Z56Kj8tlT9fNGRrpPyYQSBzFTOm2rY_CHQ0bKsU"/>
+<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-primary text-on-primary font-label-sm text-[10px] font-bold tracking-tight">
+              #1 Popüler
+            </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col">
+<div class="flex items-center justify-between gap-1">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Trüflü Burger</h3>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺490</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">
+              180g dinlendirilmiş dana eti, eritilmiş cheddar, karamelize trüf mayonez, brioche ekmek. Yanında baharatlı patates kızartması.
+            </p>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-secondary bg-surface-container px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">dinner_dining</span> Dana
+              </span>
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-secondary bg-surface-container px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">bakery_dining</span> Gluten
+              </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<button class="text-secondary font-label-sm text-label-sm flex items-center gap-1 active:opacity-75" type="button">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+            Özelleştir
+          </button>
+<button class="add-to-cart-btn h-9 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-all" data-name="Trüflü Burger" data-price="490" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Ekle
+          </button>
+</div>
+</article>
+<!-- Item 2: Margherita Di Bufala -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm relative overflow-hidden">
+<div class="flex items-start gap-space-md">
+<div class="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Artisanal Neapolitan Margherita Di Bufala pizza baked in wood-fired stone oven with blistered leopard crust, vibrant San Marzano red tomato sauce, creamy melted buffalo mozzarella pearls, fresh basil leaves, and golden extra virgin olive oil drizzle, rustic warm table setting, professional food photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjAvQ-a86KQt7adw9VFYZXZXAjWQudVIpJ5Qm9lDw-jpm0THBtTcx-3r1ThskRgqZ1rYE62OjObbGPDPl3UmKJaOBf6Cu4C26iwQQMIZTyIoLtA2HC1wTZCzgHjpTAV-e9sI5us8lWFt5i9fs8-HzKHP7xLoDWG-lpGYW2hl2ELeTsXB2ueQPtaHn1HV1YZ_lz4JnUwzLfaxE6uaMe1bna--8yMwrx337dapAF1ysV0fdpWtvmIkzc"/>
+<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-tertiary text-on-tertiary font-label-sm text-[10px] font-bold">
+              Şefin Spesiyali
+            </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col">
+<div class="flex items-center justify-between gap-1">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Margherita Di Bufala</h3>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺420</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">
+              San Marzano domates sosu, manda mozzarella, taze fesleğen yaprakları, sızma zeytinyağı.
+            </p>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-tertiary bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">eco</span> Vejetaryen
+              </span>
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-secondary bg-surface-container px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">local_pizza</span> Taş Fırın
+              </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-sm text-label-sm text-secondary">28 cm • Odun Ateşi</span>
+<button class="add-to-cart-btn h-9 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-all" data-name="Margherita Di Bufala" data-price="420" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Ekle
+          </button>
+</div>
+</article>
+<!-- Item 3: Trüflü Parmesanlı Patates -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm relative overflow-hidden">
+<div class="flex items-start gap-space-md">
+<div class="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Golden crisp hand-cut French fries tossed in white truffle oil, dusted with freshly shaved aged parmesan cheese, micro herbs, accompanied by a small ceramic dipping dish of wild thyme aioli, warm Mediterranean bistro tabletop, high-end food close-up." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBp9fUOatwG6T1CroI3ezlL9D45fcPb0UUJx0r5x7HGqo8xxFxpV9LxeuIu2Z67dOesdlEhJ9KlgDd08WQDP169aXjNX5wj0X5Uien0L21vZCcFpLgInNp80waO6u_wFBANzsimFhhPQtckE6_Rfam8M1subew69RlGY8fUHmbV840grWZR6WEfkgbw48hcr7u3MHN5DCysJChK144722dLBJUGJ-51HWraKDdPQYuqQyELWzqWued4"/>
+</div>
+<div class="flex-1 min-w-0 flex flex-col">
+<div class="flex items-center justify-between gap-1">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Trüflü Parmesan Patates</h3>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺210</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">
+              Taze trüf yağı, rendelenmiş 24 aylık parmesan, dağ kekiği mayonez eşliğinde çıtır lezzet.
+            </p>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-tertiary bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">eco</span> Vejetaryen
+              </span>
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-secondary bg-surface-container px-1.5 py-0.5 rounded">
+                Paylaşımlık
+              </span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-sm text-label-sm text-secondary">Paylaşımlık Başlangıç</span>
+<button class="add-to-cart-btn h-9 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-all" data-name="Trüflü Parmesan Patates" data-price="210" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Ekle
+          </button>
+</div>
+</article>
+</div>
+</section>
+<!-- Section 2: Burger & Ana Yemekler -->
+<section class="w-full mb-space-xl scroll-mt-28" id="section-mains">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Burger &amp; Ana Yemekler</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Öne Çıkanlar</span>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Item: Dana Kaburga Burger -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Slow cooked shredded beef short rib burger piled high with glossy smoky barbecue sauce, crispy fried onion strings, and house pickles inside a buttered brioche bun, served on dark ceramic slate with warm rustic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfc2T2JQbxAmgiySSwGI31sebslnlKf0hDaq4Cob7KCUp-tFLF0Kus1H4BHOQjlnCnvn52yDcJTPlMjmBCe6mc2dJU4Pi-PtjdBdigYtryZMEFo1Rb5VUer3EQho72CP8qmnL_Be2OdoFudIdP8TU0ISCcpReEjqz8wOY867yKsQ4G7KK4KZR8gtNxDXmKzNReybTQPvy_JZA3zGCvKSh9qZSzVkq7CANqz4IZ2KdxCiLbvD5bkyUv"/>
+</div>
+<div class="flex-1 min-w-0 flex flex-col">
+<div class="flex items-center justify-between gap-1">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Dana Kaburga Burger</h3>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺520</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">
+              12 saat ağır ateşte pişmiş dana kaburga, füme barbekü sos, çıtır soğan ve turşu dilimleri.
+            </p>
+<span class="font-label-sm text-[10px] text-on-secondary-container mt-2">12 Saat Ağır Pişirim</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<button class="text-secondary font-label-sm text-label-sm flex items-center gap-1 active:opacity-75" type="button">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+            Pişme Tercihi
+          </button>
+<button class="add-to-cart-btn h-9 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-all" data-name="Dana Kaburga Burger" data-price="520" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Ekle
+          </button>
+</div>
+</article>
+<!-- Item: Izgara Somon Kase -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start gap-space-md">
+<div class="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Healthy colorful grain bowl with seared grilled Atlantic salmon fillet, fluffy tri-color quinoa, sliced ripe avocado, steamed green edamame beans, sesame ponzu glaze, fresh radishes, and toasted sesame seeds, vibrant clean studio aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9J4tQZ9a_ru4D1Sftlsbyf8Lfq2rpISrD8G-fB6GZ6Z2mNLOQsgwsadinJ7GfyVXn8pOvwzpMp7d-SGXOCRnoSdYK3t86hJWkpoMWa3W_N9Xe7kHIy39Hn1pR8SSH1FTRXe-WhyzL2MdIurJJI43SqUbFtYFysG-zofW_IfO3AKcFeypj3eNWJcRq_u54Fjdb9RHc59i4pC0OEeMABhhSanrD1KyZC4QY6sTp-D3Z-U0XnMsE-MlY"/>
+<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-tertiary text-on-tertiary font-label-sm text-[10px]">
+              Fit &amp; Sağlıklı
+            </span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col">
+<div class="flex items-center justify-between gap-1">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Izgara Somon Kase</h3>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺460</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mt-1">
+              Kinoa tabanı, olgun avokado, edamame, salatalık şeritleri ve susamlı ponzu sos ile ferahlatıcı lezzet.
+            </p>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-0.5 font-label-sm text-[10px] text-tertiary bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+                Glutensiz
+              </span>
+<span class="font-label-sm text-[10px] text-secondary">Omega-3 Zengin</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-sm text-label-sm text-secondary">Soğuk Servis</span>
+<button class="add-to-cart-btn h-9 px-4 rounded-xl bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm active:scale-95 transition-all" data-name="Izgara Somon Kase" data-price="460" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            Ekle
+          </button>
+</div>
+</article>
+</div>
+</section>
+<!-- Section 3: Tatlılar & Kahve -->
+<section class="w-full mb-space-xl scroll-mt-28" id="section-sweets">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Tatlılar &amp; İçecekler</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Tatlı Kapanış</span>
+</div>
+<div class="grid grid-cols-1 gap-space-md">
+<!-- San Sebastian Cheesecake -->
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex items-center justify-between gap-space-md">
+<div class="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Creamy caramelized San Sebastian Basque cheesecake slice with silky warm Belgian milk chocolate ganache pouring over its molten soft center, elegant dessert plating on porcelain tableware with ambient restaurant lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlfNS_QBRCBpOj_jTxc9SyVo1bmij2NHTwNFMTvIpXkeKFuopm9eosd4w7NUxIoQtRbYAUnr0nM15RozcVfnlbmcp6VnUTBw8tZDwo_uHnM0S2EgHOjYSQzqMpbrxGMZrtKe_a9dfXTCSpOFKfhIp0arjSWw8THGS_llGWEzfCC4J2ynyBbMuQgrnOdYFwf-qCjt6u1WIYKkgClr9m_WQeWFKGR5HNi-S9_vNXHti7ru6R59GMClze"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-label-lg text-label-lg text-on-surface font-semibold truncate">San Sebastian Cheesecake</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-0.5">
+            Belçika sütlü çikolata sosu ile sıcak servis.
+          </p>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums block mt-1">₺220</span>
+</div>
+<button aria-label="Sepete Ekle" class="add-to-cart-btn w-10 h-10 rounded-xl bg-surface-container-high text-primary hover:bg-primary hover:text-on-primary flex items-center justify-center shrink-0 transition-all active:scale-95" data-name="San Sebastian Cheesecake" data-price="220" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</article>
+<!-- Ev Yapımı Limonata & Cold Brew Quick Tiles -->
+<div class="grid grid-cols-2 gap-space-sm">
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-tertiary text-[20px]">local_cafe</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺140</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold mt-2">Cold Brew</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-0.5">18 saat soğuk demlenmiş tek köken kahve.</p>
+</div>
+<button class="add-to-cart-btn mt-3 w-full h-8 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center justify-center gap-1 active:scale-95 transition-all" data-name="Cold Brew" data-price="140" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span> Ekle
+          </button>
+</article>
+<article class="bg-surface-container-lowest rounded-2xl p-space-md shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-primary text-[20px]">glass_cup</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold tabular-nums">₺160</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold mt-2">Ev Yapımı Limonata</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight mt-0.5">Taze nane ve zencefil dokunuşu ile.</p>
+</div>
+<button class="add-to-cart-btn mt-3 w-full h-8 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md flex items-center justify-center gap-1 active:scale-95 transition-all" data-name="Ev Yapımı Limonata" data-price="160" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span> Ekle
+          </button>
+</article>
+</div>
+</div>
+</section>
+<!-- Service Assurance Note -->
+<section class="w-full text-center py-space-sm px-space-md mb-space-2xl">
+<div class="inline-flex items-center justify-center gap-2 text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span>Alerjen veya özel isteklerinizi sipariş notunda belirtebilirsiniz.</span>
+</div>
+</section>
+<!-- Floating Active Cart Bar (Docked right above bottom navigation) -->
+<aside class="fixed bottom-20 inset-x-0 z-40 px-margin max-w-[480px] mx-auto transition-transform duration-300 transform translate-y-0" id="floating-cart-bar">
+<div class="w-full bg-surface-container-lowest/95 backdrop-blur-xl rounded-2xl p-3 shadow-[0_8px_24px_-4px_rgba(17,24,39,0.16)] flex items-center justify-between">
+<div class="flex items-center gap-3 pl-1">
+<div class="relative w-11 h-11 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+<span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-tertiary text-on-tertiary font-label-sm text-[11px] font-bold flex items-center justify-center shadow-xs" id="cart-counter">
+            2
+          </span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tabular-nums" id="cart-total-price">₺710</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-label-sm text-[10px]">Masa 12</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary text-[12px]" id="cart-summary-text">Sepetinizde 2 lezzet var</span>
+</div>
+</div>
+<button class="h-11 px-4 rounded-xl bg-primary text-on-primary font-label-lg text-label-lg flex items-center gap-1.5 shadow-sm active:scale-95 transition-all" id="view-cart-button" type="button">
+<span>Sepeti Gör</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</aside>
+</div>
+<script>
+  (function() {
+    let cartCount = 2;
+    let cartTotal = 710;
+
+    const cartCounterEl = document.getElementById('cart-counter');
+    const cartTotalPriceEl = document.getElementById('cart-total-price');
+    const cartSummaryTextEl = document.getElementById('cart-summary-text');
+    const floatingCartBar = document.getElementById('floating-cart-bar');
+    const addButtons = document.querySelectorAll('.add-to-cart-btn');
+
+    // Add to cart interactive feedback
+    addButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const price = parseInt(btn.getAttribute('data-price') || '0', 10);
+        cartCount += 1;
+        cartTotal += price;
+
+        cartCounterEl.textContent = cartCount;
+        cartTotalPriceEl.textContent = '₺' + cartTotal;
+        cartSummaryTextEl.textContent = 'Sepetinizde ' + cartCount + ' lezzet var';
+
+        // Little tactile scale animation on the floating pill
+        floatingCartBar.classList.add('scale-105');
+        setTimeout(() => floatingCartBar.classList.remove('scale-105'), 180);
+
+        // Feedback on the clicked button
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span> Eklendi';
+        btn.classList.add('bg-tertiary', 'text-on-tertiary');
+        btn.classList.remove('bg-primary', 'text-on-primary', 'bg-surface-container-high');
+
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+          btn.classList.remove('bg-tertiary', 'text-on-tertiary');
+          if (btn.classList.contains('add-to-cart-btn') && !btn.classList.contains('w-10')) {
+            btn.classList.add('bg-primary', 'text-on-primary');
+          }
+        }, 1200);
+      });
+    });
+
+    // Search input micro-interactions
+    const searchInput = document.getElementById('menu-search-input');
+    const searchClearBtn = document.getElementById('search-clear-btn');
+    if (searchInput && searchClearBtn) {
+      searchInput.addEventListener('input', (e) => {
+        if (e.target.value.length > 0) {
+          searchClearBtn.classList.remove('hidden');
+        } else {
+          searchClearBtn.classList.add('hidden');
+        }
+      });
+      searchClearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClearBtn.classList.add('hidden');
+        searchInput.focus();
+      });
+    }
+
+    // Filter Chip Toggling
+    const filterChips = document.querySelectorAll('.filter-chip');
+    filterChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        filterChips.forEach(c => {
+          c.classList.remove('bg-primary', 'text-on-primary');
+          c.classList.add('bg-surface-container-lowest', 'text-on-surface-variant');
+        });
+        chip.classList.remove('bg-surface-container-lowest', 'text-on-surface-variant');
+        chip.classList.add('bg-primary', 'text-on-primary');
+      });
+    });
+
+    // Category Pill active state transition
+    const categoryPills = document.querySelectorAll('.category-pill');
+    categoryPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        categoryPills.forEach(p => {
+          p.classList.remove('bg-primary-container', 'text-on-primary');
+          p.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+        });
+        pill.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+        pill.classList.add('bg-primary-container', 'text-on-primary');
+      });
+    });
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-8px_24px_-4px_rgba(17,24,39,0.06)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 max-w-[480px] mx-auto px-space-xs"><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="menu" href="#"><span class="material-symbols-outlined text-[22px]">restaurant_menu</span><span class="font-label-sm text-label-sm mt-0.5">Menü</span></a><a class="relative flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="siparislerim" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-sm text-label-sm mt-0.5">Siparişler</span><span class="absolute top-1.5 right-3 px-1 rounded-full bg-tertiary text-on-tertiary font-label-sm text-[10px] leading-3">2</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="hesap-bol" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-sm text-label-sm mt-0.5">Hesap &amp; Böl</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-secondary transition-all active:scale-95" data-path="garson" href="#"><span class="material-symbols-outlined text-[22px]">room_service</span><span class="font-label-sm text-label-sm mt-0.5">Garson</span></a></div></nav></body></html>
