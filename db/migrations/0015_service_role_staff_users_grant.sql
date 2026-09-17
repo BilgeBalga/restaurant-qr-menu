@@ -1,0 +1,27 @@
+-- Minimum-privilege fix for the confirmed staff-account creation failure
+-- (manual pilot test — see the privilege-scope review). `service_role`
+-- has no table-level privileges anywhere in the public schema in this
+-- project instance: 0002_rls_policies.sql:9 explicitly (and incorrectly)
+-- assumed "service_role is not referenced here: it already bypasses RLS"
+-- is sufficient. BYPASSRLS only skips row-level security POLICIES — it
+-- is not a table-level privilege grant, which is a separate, prerequisite
+-- authorization layer in Postgres. Confirmed via a live, read-only
+-- diagnostic against the real project: `service_role` correctly
+-- authenticates for the GoTrue Admin API (auth.admin.createUser/listUsers
+-- succeed) but was rejected with "permission denied for table
+-- staff_users" on the one direct table read findOrCreateStaffAuthUser()
+-- (lib/auth/adminUsers.ts) performs before ever reaching the Admin API.
+--
+-- Scope, deliberately minimal (see the privilege-scope review): the admin
+-- client (lib/supabase/admin.ts) is used in exactly two call sites
+-- (app/actions/staffAdmin.ts, app/actions/platformAdmin.ts), both solely
+-- through findOrCreateStaffAuthUser, which only ever runs
+-- `SELECT id FROM staff_users WHERE email = ...`. Nothing else — no
+-- INSERT/UPDATE/DELETE via this client anywhere: staff_users' only write
+-- path is the handle_new_auth_user trigger (0001_functions.sql), a
+-- SECURITY DEFINER function that runs as its owner, not as service_role;
+-- restaurant_staff and provision_restaurant's writes both go through the
+-- normal authenticated-role client, never this one. One table, one
+-- privilege, nothing broader — deliberately not ALTER DEFAULT PRIVILEGES,
+-- so this has zero effect on any table created by a future migration.
+GRANT SELECT ON public.staff_users TO service_role;
