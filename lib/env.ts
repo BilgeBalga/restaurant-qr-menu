@@ -25,8 +25,25 @@ import { z } from "zod";
  * build.
  */
 
+/**
+ * Must be the bare project origin (e.g. `https://xxxx.supabase.co`) — no
+ * path segment. supabase-js appends its own `/auth/v1`, `/rest/v1`, etc.
+ * onto this value, so a URL that already carries one of those (e.g.
+ * copied from the "REST" section of the Supabase dashboard instead of the
+ * plain project URL) silently doubles up into a 404 for every request —
+ * which the caller then sees as an opaque, misleading failure with no
+ * indication the URL itself was wrong. Reject that shape here instead, so
+ * a bad value fails loudly at the env layer.
+ */
+const supabaseUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => new URL(value).pathname === "/" || new URL(value).pathname === "", {
+    message: "must be the bare project origin, with no path (e.g. https://xxxx.supabase.co, not .../rest/v1)",
+  });
+
 const supabaseClientEnvSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_URL: supabaseUrlSchema,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 });
 
@@ -41,8 +58,8 @@ let cachedSupabaseClientEnv: SupabaseClientEnv | undefined;
 let cachedPublicEnv: PublicEnv | undefined;
 
 export function formatEnvError(error: z.ZodError): string {
-  const missing = error.issues.map((issue) => issue.path.join(".")).join(", ");
-  return `Missing or invalid environment variables: ${missing}. Copy .env.example to .env.local and fill in real values.`;
+  const details = error.issues.map((issue) => `${issue.path.join(".")} (${issue.message})`).join(", ");
+  return `Missing or invalid environment variables: ${details}. Copy .env.example to .env.local and fill in real values.`;
 }
 
 /**

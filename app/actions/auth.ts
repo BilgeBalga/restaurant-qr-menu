@@ -5,6 +5,7 @@ import { AppError, toActionResult, type ActionResult } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireStaffContext } from "@/lib/auth/session";
 import { clearActiveRestaurantCookie, setActiveRestaurantCookie } from "@/lib/auth/activeRestaurant";
+import { classifySignInError } from "@/lib/auth/signInError";
 
 /**
  * Thin server action per §22 — validation + the actual work happen one
@@ -22,54 +23,26 @@ export async function signInWithPassword(
   _prevState: ActionResult<null> | null,
   formData: FormData,
 ): Promise<ActionResult<null>> {
-  const rawEmail = String(formData.get("email") ?? "");
-  const email = rawEmail.trim();
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  // TEMPORARY diagnostic logging — safe (no password/token/secret values),
-  // remove once the production login incident is closed.
-  console.log("[auth:signIn] invoked", {
-    emailLength: email.length,
-    emailHadWhitespace: rawEmail !== email,
-    passwordLength: password.length,
-  });
-
   if (!email || !password) {
-    console.log("[auth:signIn] rejected: missing email or password");
     return toActionResult(
       new AppError("VALIDATION_ERROR", "missing email or password", "Enter your email and password."),
     );
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  console.log("[auth:signIn] signInWithPassword result", {
-    hasError: Boolean(error),
-    errorMessage: error?.message,
-    errorStatus: error?.status,
-    errorCode: error?.code,
-    errorName: error?.name,
-    hasUser: Boolean(data?.user),
-    hasSession: Boolean(data?.session),
-    userId: data?.user?.id,
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return toActionResult(
-      new AppError("UNAUTHENTICATED", error.message, "Incorrect email or password.", { cause: error }),
-    );
+    return toActionResult(classifySignInError(error));
   }
 
-  const { count: staffCount, error: staffError } = await supabase
+  const { count: staffCount } = await supabase
     .from("restaurant_staff")
     .select("id", { count: "exact", head: true })
     .eq("is_active", true);
-
-  console.log("[auth:signIn] restaurant_staff check", {
-    staffCount,
-    staffError: staffError?.message,
-  });
 
   if (!staffCount) {
     // §Bug #1 fix: a pure platform admin (zero restaurant_staff rows —
@@ -95,11 +68,6 @@ export async function signInWithPassword(
       .from("platform_admins")
       .select("staff_user_id", { count: "exact", head: true })
       .eq("staff_user_id", user?.id ?? "");
-
-    console.log("[auth:signIn] platform_admins check", {
-      userId: user?.id,
-      platformAdminCount,
-    });
 
     if (!platformAdminCount) {
       await supabase.auth.signOut();
