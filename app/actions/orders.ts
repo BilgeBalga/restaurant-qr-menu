@@ -98,6 +98,10 @@ function friendlyOrderError(message: string): string {
     const name = message.split(":")[1]?.trim();
     return name ? `${name} is no longer available — remove it and try again.` : "One of the selected options is no longer available.";
   }
+  if (message.startsWith("OPTION_GROUP_SELECTION_INVALID")) {
+    const name = message.split(":")[1]?.trim();
+    return name ? `Please check your selections for "${name}".` : "Please check your option selections.";
+  }
   if (message.startsWith("TABLE_INACTIVE")) return "This table isn't currently in service.";
   if (message.startsWith("RESTAURANT_INACTIVE")) return "This restaurant isn't currently available.";
   if (message.startsWith("ORDERING_DISABLED")) return "This restaurant isn't taking orders right now.";

@@ -135,6 +135,66 @@ describe("create_order — transaction correctness", () => {
     await expect(callCreateOrder(fx.tableId, [], uniqueKey("idem-empty-1"))).rejects.toThrow(/EMPTY_ORDER/);
   });
 
+  describe("option group selection cardinality (db/migrations/0016)", () => {
+    it("rejects a required group (min_select=1) submitted with zero choices, and creates nothing", async () => {
+      const fx = await createTestRestaurant();
+      const [group] = await sql`
+        INSERT INTO option_groups (restaurant_id, menu_item_id, name, selection_type, is_required, min_select, max_select)
+        VALUES (${fx.restaurantId}, ${fx.menuItemId}, 'Size', 'single', true, 1, 1)
+        RETURNING id
+      `;
+      await sql`
+        INSERT INTO option_choices (restaurant_id, option_group_id, name, price_delta_cents)
+        VALUES (${fx.restaurantId}, ${group!.id}, 'Small', 0)
+      `;
+
+      await expect(
+        callCreateOrder(fx.tableId, [{ menu_item_id: fx.menuItemId, quantity: 1 }], uniqueKey("idem-group-min-1")),
+      ).rejects.toThrow(/OPTION_GROUP_SELECTION_INVALID: Size/);
+
+      const [countRow] = await sql`SELECT count(*)::int AS count FROM orders WHERE table_id = ${fx.tableId}`;
+      expect(countRow!.count).toBe(0);
+    });
+
+    it("rejects more choices than a group's max_select allows, and creates nothing", async () => {
+      const fx = await createTestRestaurant();
+      const [group] = await sql`
+        INSERT INTO option_groups (restaurant_id, menu_item_id, name, selection_type, min_select, max_select)
+        VALUES (${fx.restaurantId}, ${fx.menuItemId}, 'Size', 'single', 0, 1)
+        RETURNING id
+      `;
+      const [small] = await sql`
+        INSERT INTO option_choices (restaurant_id, option_group_id, name, price_delta_cents)
+        VALUES (${fx.restaurantId}, ${group!.id}, 'Small', 0) RETURNING id
+      `;
+      const [large] = await sql`
+        INSERT INTO option_choices (restaurant_id, option_group_id, name, price_delta_cents)
+        VALUES (${fx.restaurantId}, ${group!.id}, 'Large', 200) RETURNING id
+      `;
+
+      await expect(
+        callCreateOrder(
+          fx.tableId,
+          [{ menu_item_id: fx.menuItemId, quantity: 1, option_choice_ids: [small!.id, large!.id] }],
+          uniqueKey("idem-group-max-1"),
+        ),
+      ).rejects.toThrow(/OPTION_GROUP_SELECTION_INVALID: Size/);
+
+      const [countRow] = await sql`SELECT count(*)::int AS count FROM orders WHERE table_id = ${fx.tableId}`;
+      expect(countRow!.count).toBe(0);
+    });
+
+    it("still accepts zero choices from an optional group (min_select=0)", async () => {
+      const fx = await createTestRestaurant(); // fixture's own "Extras" group is min_select=0, max_select=2
+      const result = await callCreateOrder(
+        fx.tableId,
+        [{ menu_item_id: fx.menuItemId, quantity: 1 }],
+        uniqueKey("idem-group-optional-1"),
+      );
+      expect(result.order_id).toBeTruthy();
+    });
+  });
+
   it("rejects invalid quantities (zero, negative, absurdly large)", async () => {
     const fx = await createTestRestaurant();
     await expect(
