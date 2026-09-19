@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveTableStatus, type TableOrderInfo } from "@/lib/business/tableStatus";
+import { canClearTable, deriveTableStatus, type TableOrderInfo, type TableStatus } from "@/lib/business/tableStatus";
 
 const NOW = new Date("2026-09-09T19:00:00.000Z");
 
@@ -37,8 +37,23 @@ describe("deriveTableStatus", () => {
     expect(deriveTableStatus({ status: "open" }, orders, NOW, 10)).toBe("preparing");
   });
 
-  it("falls back to available for the (should-be-unreachable) all-terminal case", () => {
+  it("is served when the session is open and every order is terminal", () => {
     const orders = [ordersAgo("completed", 30)];
-    expect(deriveTableStatus({ status: "open" }, orders, NOW)).toBe("available");
+    expect(deriveTableStatus({ status: "open" }, orders, NOW)).toBe("served");
+  });
+
+  it("is served (not available) with a mix of completed and cancelled orders", () => {
+    const orders = [ordersAgo("completed", 40), ordersAgo("cancelled", 20)];
+    expect(deriveTableStatus({ status: "open" }, orders, NOW)).toBe("served");
+  });
+});
+
+describe("canClearTable", () => {
+  it("is false only for available — every other status has an open session worth clearing", () => {
+    const statuses: TableStatus[] = ["ordering", "preparing", "needs_attention", "served"];
+    for (const status of statuses) {
+      expect(canClearTable(status)).toBe(true);
+    }
+    expect(canClearTable("available")).toBe(false);
   });
 });

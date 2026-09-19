@@ -138,9 +138,9 @@ describe("Finding 3 — concurrent status transitions serialize via FOR UPDATE, 
   });
 });
 
-describe("Finding 2 — table_session auto-closes exactly when its last non-terminal order finishes", () => {
+describe("table_session lifecycle — no auto-close (db/migrations/0017)", () => {
 
-  it("closes the session when the only order in it completes", async () => {
+  it("keeps the session open when the only order in it completes", async () => {
     const fx = await createTestRestaurant();
     const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-autoclose-1"));
 
@@ -149,25 +149,69 @@ describe("Finding 2 — table_session auto-closes exactly when its last non-term
 
     await setStatus(order_id, fx.staffId, "preparing");
     await setStatus(order_id, fx.staffId, "ready");
+    await setStatus(order_id, fx.staffId, "completed");
+
+    const [stillOpen] = await sql`SELECT status, closed_at, closed_by_staff_id FROM table_sessions WHERE id = ${openSession!.id}`;
+    expect(stillOpen!.status).toBe("open");
+    expect(stillOpen!.closed_at).toBeNull();
+    expect(stillOpen!.closed_by_staff_id).toBeNull();
+  });
+
+  it("keeps the session open when the only order in it is cancelled", async () => {
+    const fx = await createTestRestaurant();
+    const { order_id } = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-autoclose-cancel-1"));
+    const [openSession] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
+
+    await setStatus(order_id, fx.staffId, "cancelled");
 
     const [stillOpen] = await sql`SELECT status FROM table_sessions WHERE id = ${openSession!.id}`;
     expect(stillOpen!.status).toBe("open");
-
-    await setStatus(order_id, fx.staffId, "completed");
-
-    const [closed] = await sql`SELECT status, closed_at, closed_by_staff_id FROM table_sessions WHERE id = ${openSession!.id}`;
-    expect(closed!.status).toBe("closed");
-    expect(closed!.closed_at).not.toBeNull();
-    expect(closed!.closed_by_staff_id).toBeNull(); // NULL marks an AUTO-close, distinct from a manual clear_table()
   });
 
-  it("does NOT close the session while a second order in it is still active", async () => {
+  it("lets a customer place a second order in the same still-open session after the first is completed, and both share table_session_id", async () => {
     const fx = await createTestRestaurant();
     const first = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-1"));
-    const second = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-2"));
+    const [session] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
+
+    await setStatus(first.order_id, fx.staffId, "preparing");
+    await setStatus(first.order_id, fx.staffId, "ready");
+    await setStatus(first.order_id, fx.staffId, "completed");
+
+    const [stillOpen] = await sql`SELECT status FROM table_sessions WHERE id = ${session!.id}`;
+    expect(stillOpen!.status).toBe("open");
+
+    // Second order explicitly reuses the same session id, exactly like the
+    // customer's browser cookie would (app/actions/orders.ts createOrder).
+    const second = await withRole("anon", null, async (conn) => {
+      const [row] = await conn`
+        SELECT public.create_order(
+          ${fx.tableId}::uuid, ${conn.json([{ menu_item_id: fx.menuItemId, quantity: 1 }])}, NULL,
+          ${uniqueKey("idem-multi-2")}, ${session!.id}::uuid
+        ) AS result
+      `;
+      return row!.result as { order_id: string; table_session_id: string };
+    });
+
+    expect(second.table_session_id).toBe(session!.id);
+
+    const [firstOrder] = await sql`SELECT table_session_id FROM orders WHERE id = ${first.order_id}`;
+    expect(firstOrder!.table_session_id).toBe(second.table_session_id);
+
+    const [sessionCountRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE table_id = ${fx.tableId}`;
+    expect(sessionCountRow!.count).toBe(1); // still exactly one session for this table — no fresh one was opened
+
+    // The second order is independently actionable through the state machine.
+    await setStatus(second.order_id, fx.staffId, "preparing");
+    const [secondStatus] = await sql`SELECT status FROM orders WHERE id = ${second.order_id}`;
+    expect(secondStatus!.status).toBe("preparing");
+  });
+
+  it("does not close the session while a second order in it is still active, nor once both finish — only clear_table closes it", async () => {
+    const fx = await createTestRestaurant();
+    const first = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-active-1"));
+    const second = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-multi-active-2"));
 
     const [session] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
-    // Both orders share the one open session (§7/§18 — one table, one open session, many orders).
     const [sessionCountRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE table_id = ${fx.tableId}`;
     expect(sessionCountRow!.count).toBe(1);
 
@@ -175,31 +219,21 @@ describe("Finding 2 — table_session auto-closes exactly when its last non-term
     await setStatus(first.order_id, fx.staffId, "ready");
     await setStatus(first.order_id, fx.staffId, "completed");
 
-    const [stillOpen] = await sql`SELECT status FROM table_sessions WHERE id = ${session!.id}`;
-    expect(stillOpen!.status).toBe("open"); // second order is still "new" — session must stay open
+    const [stillOpenAfterFirst] = await sql`SELECT status FROM table_sessions WHERE id = ${session!.id}`;
+    expect(stillOpenAfterFirst!.status).toBe("open");
 
     await setStatus(second.order_id, fx.staffId, "cancelled");
 
-    const [nowClosed] = await sql`SELECT status FROM table_sessions WHERE id = ${session!.id}`;
+    const [stillOpenAfterBoth] = await sql`SELECT status FROM table_sessions WHERE id = ${session!.id}`;
+    expect(stillOpenAfterBoth!.status).toBe("open");
+
+    await withRole("authenticated", fx.staffId, async (conn) => {
+      return conn`SELECT public.clear_table(${fx.tableId}::uuid)`;
+    });
+
+    const [nowClosed] = await sql`SELECT status, closed_by_staff_id FROM table_sessions WHERE id = ${session!.id}`;
     expect(nowClosed!.status).toBe("closed");
-  });
-
-  it("a new order placed after the session auto-closed opens a FRESH session, never rejoins the closed one", async () => {
-    const fx = await createTestRestaurant();
-    const first = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-fresh-1"));
-    await setStatus(first.order_id, fx.staffId, "preparing");
-    await setStatus(first.order_id, fx.staffId, "ready");
-    await setStatus(first.order_id, fx.staffId, "completed");
-
-    const [closedSession] = await sql`SELECT id FROM table_sessions WHERE table_id = ${fx.tableId}`;
-
-    const second = await createOrder(fx.tableId, fx.menuItemId, uniqueKey("idem-fresh-2"));
-    const [secondOrder] = await sql`SELECT table_session_id FROM orders WHERE id = ${second.order_id}`;
-
-    expect(secondOrder!.table_session_id).not.toBe(closedSession!.id);
-    const [countRow] = await sql`SELECT count(*)::int AS count FROM table_sessions WHERE table_id = ${fx.tableId}`;
-    const count = countRow!.count;
-    expect(count).toBe(2);
+    expect(nowClosed!.closed_by_staff_id).toBe(fx.staffId);
   });
 });
 

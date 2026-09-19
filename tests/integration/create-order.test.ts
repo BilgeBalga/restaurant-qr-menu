@@ -293,7 +293,8 @@ describe("price snapshots and referential integrity", () => {
  * id alone can't distinguish that stale request from a genuinely new
  * customer who just scanned the same static QR (who sends no session id
  * at all and is handled by the untouched acquire-or-create path, already
- * covered by "Finding 1"/"Finding 2" tests elsewhere in this suite).
+ * covered by "Finding 1" and the table_session lifecycle tests elsewhere
+ * in this suite).
  */
 describe("create_order — closed-session rejection (§18)", () => {
 

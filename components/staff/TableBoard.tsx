@@ -15,7 +15,7 @@ import {
 } from "@/app/actions/tablesAdmin";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { startPollFallback } from "@/lib/realtime/pollFallback";
-import type { TableStatus } from "@/lib/business/tableStatus";
+import { canClearTable, type TableStatus } from "@/lib/business/tableStatus";
 import type { StaffRole } from "@/lib/business/orderStateMachine";
 import { DownloadSvgButton } from "@/components/staff/DownloadSvgButton";
 
@@ -24,6 +24,7 @@ const STATUS_STYLE: Record<TableStatus, string> = {
   ordering: "bg-blue-50 text-blue-800",
   preparing: "bg-amber-50 text-amber-800",
   needs_attention: "bg-red-50 text-red-800",
+  served: "bg-emerald-50 text-emerald-800",
 };
 
 const STATUS_LABEL: Record<TableStatus, string> = {
@@ -31,6 +32,7 @@ const STATUS_LABEL: Record<TableStatus, string> = {
   ordering: "Ordering",
   preparing: "Preparing",
   needs_attention: "Needs attention",
+  served: "Served — needs clearing",
 };
 
 const inputClass =
@@ -196,7 +198,7 @@ export function TableBoard({
             ) : null}
 
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {table.isActive && table.status !== "available" ? (
+              {table.isActive && canClearTable(table.status) ? (
                 <button
                   type="button"
                   disabled={isPending}

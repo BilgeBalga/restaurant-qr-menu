@@ -5,15 +5,18 @@ import type { OrderStatus } from "@/lib/business/orderStateMachine";
  * computed from the table's open session and that session's orders, so it
  * cannot drift from reality the way a stored status column could.
  *
- * This also encodes Finding 2 from the critical review: because
- * set_order_status auto-closes a session the instant its last non-terminal
- * order finishes, "open session with zero active orders" should never
- * actually be observed. The fallback below exists only as a defensive
- * default for that theoretically-unreachable case — if it's ever hit in
- * practice, that's a bug in the auto-close logic, not a valid steady state.
+ * Table sessions no longer auto-close when their last order finishes
+ * (db/migrations/0017_remove_order_status_session_autoclose.sql) — a
+ * session now stays open, across any number of orders, until staff
+ * explicitly clear_table()s it. That makes "open session, every order
+ * terminal" a real, common steady state (party has been served, staff
+ * hasn't cleared the table yet) rather than the unreachable case it used
+ * to be — "served" exists to represent exactly that, distinct from
+ * "available" (no open session at all) so the table doesn't look free
+ * for new seating while a party is still there.
  */
 
-export type TableStatus = "available" | "ordering" | "preparing" | "needs_attention";
+export type TableStatus = "available" | "ordering" | "preparing" | "needs_attention" | "served";
 
 export interface TableSessionInfo {
   status: "open" | "closed";
@@ -46,6 +49,13 @@ export function deriveTableStatus(
   const hasActive = orders.some((o) => o.status === "new" || o.status === "preparing");
   if (hasActive) return "preparing";
 
-  // Should not be reachable given the auto-close invariant above — see module note.
-  return "available";
+  // Session open, at least one order, none active/ready/stale — every
+  // order that's been placed has run to completed/cancelled. The party
+  // may still be at the table; staff hasn't clicked Clear table yet.
+  return "served";
+}
+
+/** Whether the staff UI should offer "Clear table" for a table in this status — anything but "available", since "available" means there's no open session left to clear. */
+export function canClearTable(status: TableStatus): boolean {
+  return status !== "available";
 }
